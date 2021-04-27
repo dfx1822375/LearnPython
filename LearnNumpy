@@ -1,0 +1,93 @@
+# Numpy的学习
+import numpy as np
+import random
+
+# 使用numpy生成数组,得到ndarray的类型
+# t1 = np.array([1,2,3,])
+# print(t1)
+# print(type(t1))
+# t2 = np.array(range(10))
+# print(t2)
+# print(type(t2))
+# t3 = np.arange(4,10,2)
+# print(t3)
+# print(type(t3))
+# print(t3.dtype) # 存储数据类型
+# print("*"*100)
+#  numpy中的数据类型
+# t4 = np.array(range(1,4),dtype="i1")  # 默认为计算机位数的int型，当数据量很大时，可指定为int8，减少内存
+# print(t4)
+# print(t4.dtype)
+# # numpy中的bool类型
+# t5 = np.array([1,1,0,1,0,0],dtype=bool)
+# print(t5)
+# print(t5.dtype)
+# # 调整数据类型
+# t6 = t5.astype("int8")
+# print(t6)
+# print(t6.dtype)
+#  numpy中的小数
+# t7 = np.array([random.random() for i in range(10)]) # 产生10个随机小数
+# print(t7)
+# print(t7.dtype)
+# t8 = np.round(t7,2)  # 保留固定小数位
+# print(t8)
+
+# 矩阵的维数
+# t1 = np.array(range(12))
+# print(t1.shape)  # shape有几个值代表矩阵维数，一维代表矩阵元素个数
+# t2 = np.array([[1,2,3],[4,5,6]])
+# print(t2.shape)
+# t3 = np.array([[[1,2,3],[4,5,6]],[[7,8,9],[10,11,12]]])
+# print(t3)
+# print(t3.shape)
+# # 改变矩阵维数
+# t4 = t1.reshape((3,4))     # 注意reshape并不改变矩阵原始维数，需要以变量赋值方式达到改变维数的效果
+# print(t4)
+# t5 = t3.reshape((2,3,2))  # 第一个代表块数，第二个为每块的行，随后为列
+# print(t5)
+# t6 = t5.reshape((12,))    # 化为一维，不可为（1,12）
+# print(t6)
+# t7 = t5.flatten()        # 利用函数实现一维转换
+# print(t7)
+# 矩阵的运算
+# a1 = np.array([[1,2,3],[4,5,6],[7,8,9]])
+# a2 = a1+2   # Numpy中矩阵与数值计算，数值作用于矩阵的每个元素
+# print(a2)
+# a3 = a1+a2  # 同型矩阵运算，对应元素进行运算，不同型也可计算矩阵与一维矩阵运算
+# print(a3)
+# 矩阵的转置
+# t1 = np.arange(24).reshape(4,6)
+# print(t1)
+# t2 = t1.transpose()   # =t1.T=t1.swapaxes(1,0)
+# print(t2)
+# # 取矩阵的某行
+# print(t1[2])   # 注意下标从0开始，取列则为t1[:,x]
+# print(t1[2:])
+# print(t1[[1,2,3]])
+# # 取某个位置值
+# c1 = t1[[0,1],[0,1]]  # 取第（0,0）与第（1,1）个元素
+# print(c1)
+# 数值修改
+# 普通修改直接取出利用=赋值
+# t1 = np.arange(24).reshape(4,6)
+# print(t1[t1 > 17])   #有条件的修改
+# t1[t1 < 18] = 3
+# print(t1)
+# t2 = np.where(t1>3,4,5) # 第一个表示条件，第二个代表替换值，第三个为剩余值，类似有clip（a，b），将小于a用a换，大于b用b换
+# print(t2)
+# 矩阵的拼接
+# t1 = np.arange(24).reshape(4,6)
+# t2 = np.arange(24).reshape(4,6)
+# t3 = np.vstack((t1,t2))  # 竖直拼接
+# t4 = np.hstack((t1,t2))  # 横拼接
+# print(t3)
+# print(t4)
+# t1[[1,2],] = t1[[2,1],]  # 行交换
+# print(t1)
+# t1[:,[1,2]]=t1[:,[2,1]]  # 列交换
+# print(t1)
+# 小记copy和view
+# a=b 完全不复制,a和b相互影响
+# a = b[:],视图的操作，一种切片，会创建新的对象a，但是a的数据完全由b保管，他们两个的数据变化是一致的，
+# a= b.copy),复制，a和b互不影响
