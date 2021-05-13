@@ -100,3 +100,24 @@ for epoch in range(10):
     print('epoch:', epoch)
     train()
     test()
+    
+    
+    
+    # 交叉熵适合用于分类情况的代价函数
+    # 下面为对上述程序进行更换代价函数处理，仅需修改下列几句程序即可
+    # 定义代价函数
+    mse_loss = nn.CrossEntropyLoss()
+    def train():
+    for i, data in enumerate(train_loader):
+        # 获得一个批次的数据和标签
+        inputs, labels = data
+        # 获得模型预测结果（64,10）
+        out = model(inputs)
+        # 交叉熵代价函数out(batch,C), labels(batch)
+        loss = mse_loss(out, labels)
+        # 梯度清0
+        optimizer.zero_grad()
+        # 计算梯度
+        loss.backward()
+        # 修改权值
+        optimizer.step()
