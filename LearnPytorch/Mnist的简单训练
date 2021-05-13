@@ -121,3 +121,14 @@ for epoch in range(10):
         loss.backward()
         # 修改权值
         optimizer.step()
+        
+        
+        
+# 修改程序使用Adam优化器，该优化器较为常见，学习率一般较小     
+# 定义模型
+LR = 0.001  # 学习率
+model = Net()
+# 定义代价函数
+mse_loss = nn.MSELoss()
+# 定义优化器
+optimizer = optim.Adam(model.parameters(), LR)  # Adam优化器较为常用，学习率也一般较小
