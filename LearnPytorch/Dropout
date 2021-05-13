@@ -57,7 +57,7 @@ model = Net()
 # 定义代价函数
 mse_loss = nn.CrossEntropyLoss()
 # 定义优化器
-optimizer = optim.SGD(model.parameters(), LR)
+optimizer = optim.SGD(model.parameters(), LR)  # SGD为随机梯度优化器
 
 
 def train():
@@ -109,3 +109,8 @@ for epoch in range(20):
     print('epoch:', epoch)
     train()
     test()
+    
+   # 修改优化器可实现正则化，修改部分如下：
+   
+   # 定义优化器，设置L2正则化
+optimizer = optim.SGD(model.parameters(), LR,weight_decay=0.001)
