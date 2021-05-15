@@ -1,0 +1,124 @@
+import numpy as np
+from torch import nn, optim
+from torch.autograd import Variable
+from torchvision import datasets, transforms
+from torch.utils.data import DataLoader
+import torch
+
+# 训练集   此时训练与测试集大小相同
+train_dataset = datasets.MNIST(root='./',
+                               train=True,
+                               transform=transforms.ToTensor(),
+                               download=True)
+# 测试集
+test_dataset = datasets.MNIST(root='./',
+                              train=False,
+                              transform=transforms.ToTensor(),
+                              download=True)
+# 批次大小
+batch_size = 64
+# 装载训练集
+train_loader = DataLoader(dataset=train_dataset,
+                          batch_size=batch_size,
+                          shuffle=True)  # shuffle起到打乱数据集作用
+# 装载测试集
+test_loader = DataLoader(dataset=test_dataset,
+                         batch_size=batch_size,
+                         shuffle=True)
+for i, data in enumerate(train_loader):  # 观察样本参数维度
+    inputs, labels = data
+    print(inputs.shape)
+    print(labels.shape)
+    break
+
+
+# 定义网络结构
+# input_size输入特征的大小
+# hidden_size，LSTM模块的数量
+# num_layers，LSTM的层数
+# LSTM默认input(seq_len, batch, feature)
+# batch_first=True,input和output(batch, seq_len, feature)
+class LSTM(nn.Module):
+    def __init__(self):
+        super(LSTM, self).__init__()
+        self.lstm = torch.nn.LSTM(
+            input_size=28,
+            hidden_size=64,
+            num_layers=1,
+            batch_first=True
+        )
+        self.out = torch.nn.Linear(in_features=64, out_features=10)
+        self.softmax = torch.nn.Softmax(dim=1)
+
+    def forward(self, x):
+        # (batch, seq_len, feature)
+        x = x.view(-1, 28, 28)
+        # output:[batch, seq_len, hidden_size]包含每个序列的输出结果
+        # 虽然LSTM的batch_first为True，但是h_n,c_n的第0个维度还是num_layers
+        # h_n:[num_layers, batch, hidden_size]只包含最后一个序列的输出结果
+        # c_n:[num_layers, batch, hidden_size]只包含最后一个序列的输出结果
+        output, (h_n, c_n) = self.lstm(x)
+        output_in_last_timestep = h_n[-1, :, :]
+        x = self.out(output_in_last_timestep)
+        x = self.softmax(x)
+        return x
+
+
+# 定义模型
+LR = 0.001  # 学习率
+model = LSTM()
+# 定义代价函数
+mse_loss = nn.CrossEntropyLoss()
+# 定义优化器
+optimizer = optim.Adam(model.parameters(), LR)  # SGD为随机梯度优化器
+
+
+def train():
+    # 训练状态
+    model.train()
+    for i, data in enumerate(train_loader):
+        # 获得一个批次的数据和标签
+        inputs, labels = data
+        # 获得模型预测结果（64,10）
+        out = model(inputs)
+        # 交叉熵代价函数out(batch,C), labels(batch)
+        loss = mse_loss(out, labels)
+        # 梯度清0
+        optimizer.zero_grad()
+        # 计算梯度
+        loss.backward()
+        # 修改权值
+        optimizer.step()
+
+
+def test():
+    # 测试状态 分别计算训练集和测试集的准确率
+    model.eval()
+    correct = 0
+    for i, data in enumerate(test_loader):
+        # 获得一个批次的数据和标签
+        inputs, labels = data
+        # 获得模型预测结果（64,10）
+        out = model(inputs)
+        # 获得最大值，以及最大值所在的位置
+        _, predicted = torch.max(out, 1)
+        # 预测正确的数量
+        correct += (predicted == labels).sum()
+    print("Test acc:{0}".format(correct.item() / len(test_dataset)))
+    correct = 0
+    for i, data in enumerate(train_loader):
+        # 获得一个批次的数据和标签
+        inputs, labels = data
+        # 获得模型预测结果（64,10）
+        out = model(inputs)
+        # 获得最大值，以及最大值所在的位置
+        _, predicted = torch.max(out, 1)
+        # 预测正确的数量
+        correct += (predicted == labels).sum()
+    print("Train acc:{0}".format(correct.item() / len(train_dataset)))
+
+
+for epoch in range(10):
+    print('epoch:', epoch)
+    train()
+    test()
