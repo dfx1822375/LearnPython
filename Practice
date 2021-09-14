@@ -1,0 +1,204 @@
+# coding:utf-8
+import copy
+
+
+# name = 'Eric'
+# print('hello '+name+' would you like Python')
+# print(name.title())  # 每个单词首字母大写
+# print(name.capitalize()) # 首字母大写
+# print(name.upper())  # 全大写  swapcase进行大小写转换
+# print(name.zfill(6)) # 按照所给长度进行补零填充，补充在前
+# print(name.count('i'))  # 检索字符出现个数
+# print(name.startswith('E'))  # 判断开头结尾字符是否为所给字符
+# print(name.endswith('i'))
+# print(name.find('i'))  # 查找字符位置，以0开始，空格计入位置，未找到返回-1，index则会报错
+# print(name.index('c'))
+# print(name.strip('c'))  # 去除首位对应字符，默认为空格
+# print(name.replace('r', 'l', 1))  # 替代作用，1：被替代 2：替代 3：替代次数，默认全部
+# print('my name is %s, my age is %s' % ('deng', 23))  # 字符串格式化，用后面替代
+# print('my name is {}, my age is {}'.format('deng', '23'))
+# a = 'deng'
+# b = 23
+# print(f'my name is {a}, age is {b}')  # 该种方法大括号中只能加变量，前两种中变量，字符串均可
+# print('my name is \'deng\'')  # \起到保留特殊字符的作用，字符串前加r可使转义字符无效
+# print(r'my name is \'deng\'')
+# a = int(input('输入a：'))  # input函数输入均为字符类型，字符串是无法修改的，重新赋值会改变内存
+# b = int(input('输入b：'))
+# c = a + b
+# print(c)
+
+# 列表（list），元组（tuple）
+# names = ['deng', 'liang', 'zhou']  # 列表类型可以包含多种数据类型，字符串、列表、元祖可以乘法计算，字典不可
+# for name in names:
+#     print(name + ' hello world')
+# names[2] = 'zhang'
+# print(names)
+# names.append('xiao')  # 一次只能一个
+# names.append('wang')
+# names.append('li')
+# names.insert(0, 'ma')  # 原来位置有对象时，插入后，一次后延一个位置
+# print(names)
+# names.remove('zhou')  # 一次只能去除一个成员，在原列表基础上修改，不生成新列表
+# names.reverse()  # 翻转顺序，元组字典均可
+# names.sort()  # 按照顺序排列，字符串则为字母顺序，数字为大小顺序，默认升序，前提一定保证列表元素为同一类型
+# # del names  # 直接删除
+# names.clear()  # 删除所有元素，保留空列表
+# new_names = names.copy()  # 复制一个相同列表，相当于创建一个副本，二者无法相互影响，而若采用a=b则会相互影响
+# new_names = copy.deepcopy(names)   # 如果为列表嵌套列表，则二者仍会相互影响，不影响则采用deepcopy（）
+# names_2 = ['xiao', 'qian', 'liu']
+# names_2.extend(names)  # 继承列表、元组，重复元素不归一处理
+# print(names_2)
+# 元组，列表，字符串取切片，a[:],a[c:d;e],左闭右开，e为步长，a[::-1]可以反转列表，从头取以0开始，末尾取从-1开始，依次类推。
+# names.index('deng')  # 返回查找对象在列表中的位置
+# names.pop(1)  # 删除对应下标对象，或者用 del names[1]
+
+# 字典
+# dic_0 = {}
+# dic_1 = {'name': 'deng', 'age': 22} # 字典key只能唯一存在
+# dic_0.update(dic_1)  # 更新字典，传入字典内容
+# dic_0.setdefault('name', 'wang')  # 对字典插入一个key，若key已经存在，则无任何改变
+# dic_0.setdefault('height', '180')
+# print(dic_0)
+# print(dic_0.keys())  # 返回字典的所有key值，同理values返回对应键值，但为一个伪列表，不具备任何列表功能，items成对返回字典键值
+# key_list = list(dic_0.keys())
+# print(key_list[0])
+# print(dic_0['name'])
+# print(dic_0.get('name'))  # 字典同样可以用clear，copy函数
+# print('name' in dic_0)  # 判断key是否存在于字典之中
+# print(bool(dic_0.get('name')))
+# rivers = { 'changjiang': 'china',
+#            'niluohe': 'egypt',
+#            'mixixibi': 'usa'
+#          }
+# for river, country in rivers.items():
+#     print(f'the river is {river}, it though the {country.title()}')
+# pop_1 = dic_0.popitem()  # 删除最后一对键值，以元组保存
+# print(pop_1[0], pop_1[1])
+
+# 集合（set） 形式类似列表，但元素不重复，无序，无下标，用大括号包含,集合元素是无法获取的
+# a_set = set()  # 集合创建可用set创建也可直接用大括号创建(创建内容不可为列表字典)，但不可用空大括号，会被默认为字典
+# b_set = set([1, 2, 3, 4])
+# # 集合相关操作 a.add(),添加元素，a.update(),更新传入集合列表字符串等，字符串被拆散后加入，a.remove(),括号内为删除内容，且无返回值
+# c_set = set([3, 4, 5, 6])
+# d_set = b_set.difference(c_set)  # 求出第一个集合中关于第二个集合的差集
+# e_set = b_set.intersection(c_set)
+# f_set = b_set.union(c_set)
+# print(d_set)
+# print(e_set)
+# print(f_set)
+# b_set.isdisjoint(c_set)  # 判断两集合是否有相同元素，有则返回false
+
+# 类型转换 int，float，str等
+# str_1 = 'my name is deng'
+# print(str_1.split())  # 字符串转列表，默认按照空格划分
+# list_1 = ['a', 'b', 'c', 'd']
+# str_2 = ','.join(list_1)  # 列表转字符串，按照引号内符号分开，列表不可含有数字元素
+# print(str_2)
+# bytes_1 = str_1.encode()  # 字符串转byte类型，byte与字符串相似，开头有字母b
+# print(bytes_1)
+# str_3 = bytes_1.decode()
+# while True:
+#     a = input('请输入披萨配方：')
+#     if a == 'quit':
+#         break
+#     print(f'披萨的配方有：{a}')
+
+
+# 函数  定义：def name（参数）：，无需指出参数类型，若要指出则使用def name（参数名：类型），单纯类型不匹配不会报错
+# name = 'deng'  # 最顶处定义变量为全局变量，只能在函数中使用，不可修改(列表字典除外)，若在函数中加上global则可修改
+# def printname():
+#     global name
+#     name = 'xiang'
+#     print(name)
+# printname()
+# print(name)
+# f = lambda: 6   # 匿名函数，分别为无参和有参
+# print(f())
+# g = lambda x,y:x*y
+# print(g(5,6))
+# def shirt(chicun, slogen = 'hello'):
+#     print('衣服的尺寸是：'+chicun+ ' 写着'+slogen)
+# shirt('large')
+# shirt('large', 'nihao')
+# shirt(chicun='mid', slogen='nihao')
+# def station(city, country):
+#     c = ''
+#     c = city + ',' + country
+#     return c
+# d = station('chongqing', 'China')
+# print(d)
+# def cars(changjia, xinghao):
+#     car = {}
+#     car['厂家'] = changjia
+#     car['型号'] = xinghao
+#     return car
+# car_1 = cars('奔驰', 'x60s')
+# print(car_1)
+
+
+# 类
+# class Person:      # class后接名称开头必为大写
+#     name = ''
+#     age = None
+#
+#     def prinname(self):   # 类内调用属性和函数一定要加self
+#         print(self.name)
+# a = Person()     # 实例化后，可通过对象对属性进行赋值与对函数进行调用,并且还可增加属性
+# a.name = 'deng'
+# a.prinname()
+# a.top = 170
+# print(a.top)
+# class Phone:       # 类的初始化函数，一般定义在类的最上方
+#     def __init__(self, a, b):
+#         self.pingpai = a
+#         self.prise = b
+# b = Phone('xiaomi', 4399)
+# print(b.pingpai+' '+str(b.prise))
+# class Cat:    # 前加两个短横线变为私有，私有属性及私有函数，只可以在类内调用，无法通过实例化赋值及调用
+#     def __init__(self, a):
+#         self.__name = a
+#     def __run(self):
+#         print(self.__name+'正在快乐地跑')
+#     def run(self):
+#         print(self.__name + '正在快乐地跑')
+# c = Cat('猪蜜蜜')
+# c.run()
+# c._Cat__run()   # 强制调用私有函数
+#
+#  装饰器，对函数进行加工处理
+# def check_f(func):   # 定义装饰器外层，基本固定句式
+#     def inner(*args, **kwargs):
+#         reselt = func(*args, **kwargs)  # 此处开始为内层处理
+#         if reselt == 'ok':
+#             return '真的行'
+#         else:
+#             return '逆天沙包'
+#     return inner  # 最后一定要返回内层函数，注意不要加括号
+# @check_f      # 此处为定义下方函数的装饰器，自动对下列函数调用
+# def str_1(a):
+#     return a
+# reselt = str_1('no')
+# print(reselt)
+# class Parent(object):    # 类的继承，括号内都好隔开，可继承多个类
+#     def __init__(self, a, b):
+#         self.name = a
+#         self.age = b
+# class Child(Parent):
+#     def pname(self):
+#         print(self.name)
+# a = Child('deng', 23)
+# a.pname()
+# class Test(object):   # 类的内置函数
+#     def __str__(self):
+#         return '这是在对类进行说明'
+#
+#     def __getattr__(self, item):
+#         return '{}并不在类的属性中'.format(item)
+#
+# t = Test()  # 实例化类注意加括号
+# print(t)
+# print(t.name)
+
+# 异常处理
+# 包含 try:对下列代码进行异常检测，检测到后执行except内容,except:对异常类型进行抓取,finally:一定会执行的提示语句
+# raise 异常名(输出信息) 自定义异常的输出，一般在if语句中
