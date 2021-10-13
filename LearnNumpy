@@ -56,6 +56,8 @@ import random
 # print(a2)
 # a3 = a1+a2  # 同型矩阵运算，对应元素进行运算，不同型也可计算矩阵与一维矩阵运算
 # print(a3)
+# 矩阵乘法
+# a*b表示对应元素乘，np.dot(a,b)为矩阵乘法
 # 矩阵的转置
 # t1 = np.arange(24).reshape(4,6)
 # print(t1)
