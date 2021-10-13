@@ -1,0 +1,246 @@
+#coding:utf-8
+import numpy as np
+import matplotlib.pyplot as plt
+import torch
+from torch.utils.data import Dataset
+from torch.utils.data import DataLoader
+from torchvision import transforms
+import torch.nn.functional as F
+import torch.optim as optim
+from torchvision import datasets
+# x_data = [1.0, 2.0, 3.0]
+# y_data = [2.0, 4.0, 6.0]
+
+# 线性拟合
+# def forward(x) :
+#     return x*w
+# def loss(x,y):
+#     y_pre = forward(x)
+#     return (y_pre-y)*(y_pre-y)
+# w_list = []
+# mse_list = []
+# for w in np.arange(0.0, 4.1, 0.1):
+#     print('w = ', w)
+#     l_sum = 0
+#     for x_val, y_val in zip(x_data, y_data):
+#       y_pre = forward(x_val)
+#       print(y_pre)
+#       loss_val = loss(x_val, y_val)
+#       l_sum += loss_val
+#       print('MSE = ', l_sum/3)
+#       w_list.append(w)
+#       mse_list.append(l_sum/3)
+# plt.plot(w_list, mse_list)
+# plt.show()
+
+# 梯度下降
+# w = 1
+# def foeward(x):
+#     return w*x
+# def loss(x, y):
+#     y_pre = foeward(x)
+#     return (y_pre-y)**2
+# def cost(xs, ys):
+#     cost = 0
+#     for x, y in zip(xs, ys):
+#         cost += loss(x,y)
+#     return cost/len(xs)
+# def gradent(xs, ys):
+#     gre = 0
+#     for x,y in zip(xs,ys):
+#         gre += 2*x*(x*w-y)
+#     return gre/len(xs)
+# print('训练前预测：', w, foeward(4))
+# for epoch in range(100):
+#     cost_val = cost(x_data, y_data)
+#     gradent_val = gradent(x_data, y_data)
+#     w -= 0.01*gradent_val
+#     print('Epoch=',epoch, 'w = ', w, 'loss =', cost_val)
+# print('训练后：', w, foeward(4))
+# 随机梯度下降则去掉cost及gradent中的累加求均值过程
+
+#pytorch线性拟合
+# x = torch.tensor([[1.0], [2.0], [3.0]])
+# y = torch.tensor([[2.0], [4.0], [6.0]])
+# class LinearMoudle(torch.nn.Module):
+#     def __init__(self):
+#         super(LinearMoudle, self).__init__()
+#         self.linear = torch.nn.Linear(1, 1)
+#     def forward(self,x):
+#         y_pred = self.linear(x)
+#         return y_pred
+# model = LinearMoudle()
+# criterion = torch.nn.MSELoss(reduction='sum')
+# optimizer = torch.optim.SGD(model.parameters(), lr=0.01)
+# for epoch in range(100):
+#     y_pre = model.forward(x)
+#     loss = criterion(y_pre, y)
+#     print(epoch, loss.item())
+#     optimizer.zero_grad()
+#     loss.backward()
+#     optimizer.step()
+# print('w = ', model.linear.weight.item())
+# print('b = ', model.linear.bias.item())
+
+# pytorch实现Logistics回归，实际为一二分类问题
+# x = torch.tensor([[1.0], [2.0], [3.0]])
+# y = torch.tensor([[0.0], [0.0], [1.0]])
+# class LogiticsRegression(torch.nn.Module):
+#     def __init__(self):
+#         super(LogiticsRegression,self).__init__()
+#         self.linear = torch.nn.Linear(1, 1)
+#     def forward(self, x):
+#         y_pre = torch.sigmoid(self.linear(x))
+#         return y_pre
+# model = LogiticsRegression()
+# criterion = torch.nn.BCELoss(size_average=False)
+# optimizer = torch.optim.SGD(model.parameters(), lr=0.01)
+# for epoch in range(1000):
+#     y_pre = model.forward(x)
+#     loss = criterion(y_pre, y)
+#     print(epoch, loss.item())
+#     optimizer.zero_grad()
+#     loss.backward()
+#     optimizer.step()
+# print('w = ', model.linear.weight.item())
+# print('b = ', model.linear.bias.item())
+# x = np.linspace(0, 10, 200)
+# x_t = torch.Tensor(x).view(200, 1)
+# y_t = model(x_t)
+# y = y_t.data.numpy()
+# plt.plot(x, y)
+# plt.plot([0, 10], [0.5, 0.5], c='r')
+# plt.grid()
+# plt.show()
+
+# class DatasetDataset(Dataset):
+#     def __init__(self, filepath):
+#         xy = np.loadtxt(filepath, delimiter=',', dtype=np.float32)
+#         self.x_data = torch.from_numpy(xy[:, :-1]) # 第一个‘：’是指读取所有行，第二个‘：’是指从第一列开始，最后一列不要
+#         self.y_data = torch.from_numpy(xy[:, [-1]]) # [-1] 最后得到的是个矩阵
+#         self.len = xy.shape[0]
+#     def __getitem__(self, index):
+#         return self.x_data[index], self.y_data[index]
+#     def __len__(self):
+#         return self.len
+#
+# dataset = DatasetDataset('diabetes.csv')
+# train_loader = DataLoader(dataset=dataset, shuffle=True, batch_size=32, num_workers=2)
+#
+#
+# class Modle(torch.nn.Module):
+#     def __init__(self):
+#         super(Modle, self).__init__()
+#         self.liner1 = torch.nn.Linear(8, 6)
+#         self.liner2 = torch.nn.Linear(6, 4)
+#         self.liner3 = torch.nn.Linear(4, 1)
+#         self.sigmoid = torch.nn.Sigmoid()
+#     def forward(self, x):
+#         x = self.sigmoid(self.liner1(x))
+#         x = self.sigmoid(self.liner2(x))
+#         x = self.sigmoid(self.liner3(x))
+#         return  x
+#
+# modle = Modle()
+#
+# criterion = torch.nn.BCELoss( reduction='mean')
+# optimizer = torch.optim.SGD(modle.parameters(), lr=0.01)
+#
+# epoch_list = []
+# loss_list = []
+#
+# if __name__ == 'main':
+#     for epoch in range(1000):
+#         for i, data in enumerate(train_loader, 0):
+#             inputs, lables = data
+#             y_pre = modle(inputs)
+#             loss = criterion(y_pre, lables)
+#             print(epoch, i, loss.item())
+#
+#
+#             optimizer.zero_grad()
+#             loss.backward()
+#
+#             optimizer.step()
+#
+# plt.plot(epoch_list, loss_list)
+# plt.ylabel('loss')
+# plt.xlabel('epoch')
+# plt.show()
+
+batch_size = 64
+transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.1307,), (0.3081,))])  # 归一化,均值和方差
+
+train_dataset = datasets.MNIST(root='../dataset/mnist/', train=True, download=True, transform=transform)
+train_loader = DataLoader(train_dataset, shuffle=True, batch_size=batch_size)
+test_dataset = datasets.MNIST(root='../dataset/mnist/', train=False, download=True, transform=transform)
+test_loader = DataLoader(test_dataset, shuffle=False, batch_size=batch_size)
+
+
+# design model using class
+
+
+class Net(torch.nn.Module):
+    def __init__(self):
+        super(Net, self).__init__()
+        self.l1 = torch.nn.Linear(784, 512)
+        self.l2 = torch.nn.Linear(512, 256)
+        self.l3 = torch.nn.Linear(256, 128)
+        self.l4 = torch.nn.Linear(128, 64)
+        self.l5 = torch.nn.Linear(64, 10)
+
+    def forward(self, x):
+        x = x.view(-1, 784)  # -1其实就是自动获取mini_batch
+        x = F.relu(self.l1(x))
+        x = F.relu(self.l2(x))
+        x = F.relu(self.l3(x))
+        x = F.relu(self.l4(x))
+        return self.l5(x)  # 最后一层不做激活，不进行非线性变换
+
+
+model = Net()
+
+# construct loss and optimizer
+criterion = torch.nn.CrossEntropyLoss()
+optimizer = optim.SGD(model.parameters(), lr=0.01, momentum=0.5)
+
+
+# training cycle forward, backward, update
+
+
+def train(epoch):
+    running_loss = 0.0
+    for batch_idx, data in enumerate(train_loader, 0):
+        # 获得一个批次的数据和标签
+        inputs, target = data
+        optimizer.zero_grad()
+        # 获得模型预测结果(64, 10)
+        outputs = model(inputs)
+        # 交叉熵代价函数outputs(64,10),target（64）
+        loss = criterion(outputs, target)
+        loss.backward()
+        optimizer.step()
+
+        running_loss += loss.item()
+        if batch_idx % 300 == 299:
+            print('[%d, %5d] loss: %.3f' % (epoch + 1, batch_idx + 1, running_loss / 300))
+            running_loss = 0.0
+
+
+def test():
+    correct = 0
+    total = 0
+    with torch.no_grad():
+        for data in test_loader:
+            images, labels = data
+            outputs = model(images)
+            _, predicted = torch.max(outputs.data, dim=1)  # dim = 1 列是第0个维度，行是第1个维度
+            total += labels.size(0)
+            correct += (predicted == labels).sum().item()  # 张量之间的比较运算
+    print('accuracy on test set: %d %% ' % (100 * correct / total))
+
+
+if __name__ == '__main__':
+    for epoch in range(10):
+        train(epoch)
+        test()
