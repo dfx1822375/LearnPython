@@ -1,0 +1,244 @@
+import numpy as np
+from matplotlib import pyplot as plt
+import math
+
+def And(a, b):
+    A = np.array([a,b])
+    W = np.array([1, 1])
+    o = 1.9  #b = -1.9
+    y = A*W  #y = sum(A*W)+b
+    if sum(y)>o:  #if y >0:
+        y = 1
+    else:
+        y = 0
+    return y
+
+def Or(a, b):
+    A = np.array([a, b])
+    W = np.array([1, 1])
+    o = 1
+    y = A * W
+    if sum(y)>=o:
+        y = 1
+    else:
+        y = 0
+    return y
+def AndNot(a, b):
+    A = np.array([a, b])
+    W = np.array([-1, -1])
+    o = -1.5
+    y = A * W
+    if sum(y)>o:
+        y = 1
+    else:
+        y = 0
+    return y
+def xor(a, b):
+    x1 = AndNot(a, b)
+    x2 = Or(a, b)
+    y = And(x1, x2)
+    return y
+# print(xor(0, 0))
+# print(xor(1, 0))
+# print(xor(0, 1))
+# print(xor(1, 1))
+def sigmoid(x):
+    y = 1/(1+np.exp(-x))
+    return y
+# x = np.arange(-10, 10,0.01)
+# plt.plot(x, sigmoid(x))
+# plt.show()
+def step_fun(x):
+    return np.array(x>0,dtype=np.int)  # 对输入矩阵每个元素与0进行比较，生成一个布尔类型数组，再将布尔数组转为numpy数组（Ture对1）
+# plt.plot(x, step_fun(x))
+# plt.show()
+def Relu(x):
+    return np.maximum(0, x)
+# plt.plot(x, Relu(x))
+# plt.show()
+def Math(x, y):
+    a = np.array([x, y])
+    w = np.array([[1, 3, 5], [2, 4, 6]])
+    y = np.dot(a, w)
+    return y
+# print(Math(1, 2))
+def softmax(a):
+    A = np.exp(a-np.max(a)) # 防止计算溢出，一般先减去矩阵最大值
+    B = A/sum(A)
+    return B
+a = [3, 4, 5]
+# print(softmax(a))
+def MSE(x, y):    # 均方误差损失函数，x表示输出，y为真实
+    return 1/2*np.sum((x-y)**2)
+def CEL(x,y):       # 交叉熵损失函数
+    delta = 0.000001
+    a = np.log(np.add(x,delta))  # 加上微小值避免出现log（0）现象，此处直接写加号会报类型错误
+    b = -np.sum(y*a)
+    return b
+def diff_num(f,x):
+    h = 1e-4
+    return (f(x+h)-f(x-h))/(2*h)
+def num_grad(f,x):     # 偏导数函数，算法按照偏导其他自变量取零计算
+    h = 0.0001
+    grad = np.zeros_like(x)
+    i = 0
+    for d in x:
+        temp = np.zeros_like(x)
+        temp[i] = d
+        f1 = f(temp+h)
+        f2 = f(temp-h)
+        grad[i] = (f1-f2)/(2*h)
+        i = i+1
+    return grad
+def fuc(x):
+    return x[0]**2+x[1]**2
+# print(num_grad(fuc,[2, 3]))
+def grad_decend(f,x,a,step_num):  # 迭代梯度下降，注意循环时要用range
+    for i in range(step_num):
+        # plt.scatter(x[0],x[1])
+        x = x-a*num_grad(f,x)
+    # plt.show()
+    return x
+# print(grad_decend(fuc,[-3,4],0.1,100))
+class Multi_layer():    #定义乘法计算层
+    def __init__(self):
+        self.x = None
+        self.y = None
+    def forwad(self,x,y):
+        self.x = x
+        self.y = y
+        return self.x*self.y
+    def backward(self,last_grad):
+        dx = last_grad*self.y
+        dy = last_grad*self.x
+        return dx,dy
+# apple_num = 2
+# apple_price = 100
+# tax = 1.1
+# last = 1
+# apple_price_layer = Multi_layer()
+# tax_layer = Multi_layer()
+# dot1 = apple_price_layer.forwad(apple_price,apple_num)
+# dot2 = tax_layer.forwad(dot1,tax)
+# ddot1, dtax = tax_layer.backward(last)
+# dapp_price,dapp_num = apple_price_layer.backward(ddot1)
+# print(dtax,dapp_price,dapp_num)
+class Add_layer():
+    def __init__(self):
+        self.x = None
+        self.y = None
+    def forward(self,x,y):
+        self.x = x
+        self.y = y
+        return x+y
+    def backward(self,last):
+        dx = last
+        dy = last
+        return dx,dy
+# apple_num = 2
+# apple_price = 100
+# tax = 1.1
+# last = 1
+# orange_num = 3
+# orange_price = 150
+# dot1 = Multi_layer()
+# dot2 = Multi_layer()
+# dot3 = Add_layer()
+# dot4 = Multi_layer()
+# allapple_price = dot1.forwad(apple_price,apple_num)
+# allorange_price = dot2.forwad(orange_price,orange_num)
+# addprice = dot3.forward(allapple_price,allorange_price)
+# lastprice = dot4.forwad(addprice,tax)
+# daddprice,dtax = dot4.backward(last)
+# a,o = dot3.backward(daddprice)
+# dappleprice,dapplu_num = dot1.backward(a)
+# dorange_price,dorange_num = dot2.backward(o)
+# print(daddprice,dtax,dapplu_num,dappleprice,dorange_num,dorange_price)
+class Relu():
+    def __init__(self):
+        self.x = None
+    def forward(self,a):
+        self.x = (a<=0)
+        out = a.copy()
+        out[self.x] = 0
+        return out
+    def backward(self,dout):
+        dout[self.x] = 0
+        return dout
+# a = np.array([1,2,3,0,-1])
+# b = (a<=0)
+# print(b)
+# c = np.array(b,dtype=np.int)
+# print(c)
+class Sigmiod():
+    def __init__(self):
+        self.out = None
+    def forward(self,a):
+        x = np.exp(-a)
+        self.out = 1/(1+x)
+        return self.out
+    def backward(self,last):
+        return self.out*(1.0-self.out)*last
+class Affine():
+    def __init__(self,W,b):
+        self.W = W
+        self.b = b
+        self.x = None
+        self.dw = None
+        self.db = None
+    def foeward(self,x):
+        self.x = x
+        return np.dot(self.x,self.W)+self.b
+    def backward(self,last):
+        self.db = np.sum(last,axis=0)
+        self.dw = np.dot(self.x.T,last)
+        dx = np.dot(last,self.W.T)
+        return dx
+class Softmax_BCE():
+    def __init__(self):
+        self.loss = None
+        self.y = None
+        self.t = None
+    def forward(self,x,y,t):
+        self.y = softmax(x)
+        self.t = t
+        self.loss = CEL(y,t)
+        return self.loss
+    def backward(self,last = 1):
+        batch = self.t.shape[0]
+        dout = (self.y-self.t)/batch
+        return dout
+class SGD():
+    def __init__(self, lr = 0.01):
+        self.lr = lr
+    def update(self,params,grads):
+        for key in params.keys():
+            params[key] -= self.lr*grads[key]
+class Momentom():         #利用动量优化，a相当于定义的摩擦力
+    def __init__(self,lr=0.01,a=0.9):
+        self.lr = lr
+        self.a = a
+        self.v =None
+    def update(self,paras,grads):
+        if self.v is None:
+            self.v = {}
+            for key,value in paras.items():
+                self.v[key] = np.zeros_like(value)
+        for key in paras.keys():
+            self.v[key] = self.a*self.v[key]-grads[key]*self.lr
+            paras[key] += self.v[key]
+class Adagrad():       #自适应改变学习率优化，梯度变化大的学习率小
+    def __init__(self,lr = 0.01):
+        self.lr = lr
+        self.h =None
+    def update(self,paras,grands):
+        if self.h is None:
+            self.h = {}
+            for key,values in paras.items():
+                self.h[key] = np.zeros_like(values)
+        for key in paras.keys():
+            self.h[key] += grands[key]**2
+            paras[key] -= self.lr*grands[key]/(np.sqrt(self.h[key]+1e-7))
+
+
+
