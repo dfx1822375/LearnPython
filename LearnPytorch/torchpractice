@@ -10,6 +10,7 @@ import torch.optim as optim
 from torchvision import datasets
 # x_data = [1.0, 2.0, 3.0]
 # y_data = [2.0, 4.0, 6.0]
+# @可进行张量矩阵乘法，改变原张量的运算在语句中加下划线即可，如A.add_()（求导数部分不用）
 
 # 线性拟合
 # def forward(x) :
