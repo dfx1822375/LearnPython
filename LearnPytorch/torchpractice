@@ -12,7 +12,7 @@ from torchvision import datasets
 # y_data = [2.0, 4.0, 6.0]
 # @可进行张量矩阵乘法，改变原张量的运算在语句中加下划线即可，如A.add_()（求导数部分不用）
 # 注意tensor的创建，如果为三维的话，则shape排列为（列，行，通道数）
-
+# 按坐标轴求和，按哪个轴则最终去掉哪个轴
 # 线性拟合
 # def forward(x) :
 #     return x*w
