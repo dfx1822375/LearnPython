@@ -13,6 +13,18 @@ from torchvision import datasets
 # @可进行张量矩阵乘法，改变原张量的运算在语句中加下划线即可，如A.add_()（求导数部分不用）
 # 注意tensor的创建，如果为三维的话，则shape排列为（列，行，通道数）
 # 按坐标轴求和，按哪个轴则最终去掉哪个轴
+
+# torch中的各种乘法
+# torch.mul(input, value, out=None) 对输入矩阵乘以对应值  
+
+# torch.mv(mat, vec, out=None) → Tensor  矩阵乘向量，后者必须为满足维度的一维向量，结果仍为一维张量
+
+# torch.mm(mat1, mat2, out=None) → Tensor  矩阵乘法，结果为矩阵
+
+# torch.dot(tensor1, tensor2) → float  两个一维张量内积，结果为对应元素乘积和
+
+# 可以使用@代替，对一维张量执行@操作就是dot，对一维和二维张量执行操作就是mv，对二维张量执行@操作就是mm
+
 # 线性拟合
 # def forward(x) :
 #     return x*w
