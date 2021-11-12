@@ -25,6 +25,8 @@ from torchvision import datasets
 
 # 可以使用@代替，对一维张量执行@操作就是dot，对一维和二维张量执行操作就是mv，对二维张量执行@操作就是mm
 
+# torch.norm()  计算L2范数，即元素平方和开根号
+# torch.abs(u).sum()  计算L1范数，即元素绝对值和
 # 线性拟合
 # def forward(x) :
 #     return x*w
