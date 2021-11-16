@@ -29,6 +29,9 @@ from torchvision import datasets
 # torch.abs(u).sum()  计算L1范数，即元素绝对值和
 
 # 非标量变量的反向传播    张量反向传播，要在backward中传入参数，参数为维度与y一致的ones矩阵，一般也可直接y.sum().backward()
+
+# net.state_dict() 访问网络参数
+
 x = torch.tensor([2, 3], dtype=torch.float, requires_grad=True)
 # 初始化目标张量，形状为1×2
 y = torch.zeros(1, 2)
