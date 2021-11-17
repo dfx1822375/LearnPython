@@ -32,6 +32,8 @@ from torchvision import datasets
 
 # net.state_dict() 访问网络参数
 
+# 池化层可以降低卷积的位置敏感性
+
 x = torch.tensor([2, 3], dtype=torch.float, requires_grad=True)
 # 初始化目标张量，形状为1×2
 y = torch.zeros(1, 2)
