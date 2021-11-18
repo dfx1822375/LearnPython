@@ -11,7 +11,7 @@ from torchvision import datasets
 # x_data = [1.0, 2.0, 3.0]
 # y_data = [2.0, 4.0, 6.0]
 # @可进行张量矩阵乘法，改变原张量的运算在语句中加下划线即可，如A.add_()（求导数部分不用）
-# 注意tensor的创建，如果为三维的话，则shape排列为（列，行，通道数）
+# 注意tensor的创建，如果为三维的话，则shape排列为（列，行，通道数），注意只有浮点数才能计算梯度所以在创建张量时最好均采用浮点数创建或者加上dtype = torch.float32
 # 按坐标轴求和，按哪个轴则最终去掉哪个轴
 
 # torch中的各种乘法
@@ -32,7 +32,11 @@ from torchvision import datasets
 
 # net.state_dict() 访问网络参数
 
-# 池化层可以降低卷积的位置敏感性
+# 池化层可以降低卷积的位置敏感性，pytorch默认为32位浮点数据
+
+# a.numel(),计算张量元素个数
+
+# 计算次方函数pow，如pow（2,4）则计算2四次方，或者a.pow（2），计算a平方，其结果不会自动转为浮点数，所以import math后使用math.pow更加安全
 
 x = torch.tensor([2, 3], dtype=torch.float, requires_grad=True)
 # 初始化目标张量，形状为1×2
