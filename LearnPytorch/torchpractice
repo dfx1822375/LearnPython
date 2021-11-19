@@ -37,10 +37,22 @@ from torchvision import datasets
 # a.numel(),计算张量元素个数
 
 # 计算次方函数pow，如pow（2,4）则计算2四次方，或者a.pow（2），计算a平方，其结果不会自动转为浮点数，所以import math后使用math.pow更加安全
+torch.rsqrt() # 计算平方倒数
 
 # 张量与numpy数组的转换：
 numpy转tensor：Ftensor = torch.as_tensor(numpy数据)，或者 Ftensor = torch.from_numpy(numpy数据）
 tensor转numpy: a = Ftensor.numpy()
+
+#torch中随机张量的创建
+A = torch.normal(mean = 0.0,std = torch.tensor(1.0))  # 通过指定均值和标准差生成随机数
+B = torch.rand(3,4)  # 在区间[0,1)上生成服从均匀分布的张量，参数为生成张量维度
+print(torch.randn(3,3)) # 生成服从标准正态分布的随机数
+torch.randperm(10)  ## 将0～10（不包括10）之间的整数随机排序
+torch.linspace(start,end,steps = 100) # 函数的作用是，返回一个一维的tensor（张量），这个张量包含了从start到end（包括端点）的等距的steps个数据点
+
+#torch中改变张量的形状有三种方式，分别为reshape，view和resize，前两者相似，保持改变后的张量与原张量元素数量一致，而后者可以只取部分元素
+
+# 张量a.expand()只能对向量使用，b.repeat（列重复次数，行重复次数）
 
 x = torch.tensor([2, 3], dtype=torch.float, requires_grad=True)
 # 初始化目标张量，形状为1×2
