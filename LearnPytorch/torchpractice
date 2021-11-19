@@ -54,6 +54,12 @@ torch.linspace(start,end,steps = 100) # 函数的作用是，返回一个一维�
 
 # 张量a.expand()只能对向量使用，b.repeat（列重复次数，行重复次数）
 
+# 矩阵的拼接 torch.cat（A，B，dim = ），torch.chunk（A，n，dim=），按照维度矩阵切成n块，torch.split（A，[],dim=）,可将矩阵按照传入的列表大小进行切分
+tensor.clamp（A，min，max），将矩阵换到[min,max]之间，小的变为min，大的变为max
+
+# torch.max（）返回张量最大值，torch.argmax（）返回最大值索引，torch.topk(A,n)，获取张量前几个大的数值并返回位置
+
+
 x = torch.tensor([2, 3], dtype=torch.float, requires_grad=True)
 # 初始化目标张量，形状为1×2
 y = torch.zeros(1, 2)
