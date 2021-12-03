@@ -8,6 +8,7 @@ from torchvision import transforms
 import torch.nn.functional as F
 import torch.optim as optim
 from torchvision import datasets
+# 常用的损失函数：分类问题-》交叉熵，回归问题-》均方根误差，
 # x_data = [1.0, 2.0, 3.0]
 # y_data = [2.0, 4.0, 6.0]
 # @可进行张量矩阵乘法，改变原张量的运算在语句中加下划线即可，如A.add_()（求导数部分不用）
