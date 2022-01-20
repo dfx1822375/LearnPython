@@ -1,0 +1,2320 @@
+import os
+os.environ["KMP_DUPLICATE_LIB_OK"]="TRUE"
+import torch
+import torch.utils.data as Data
+from matplotlib import pyplot as plt
+from matplotlib.font_manager import FontProperties
+import matplotlib.image as mpimg
+import torch.nn as nn
+import torch.nn.functional as F
+from skimage.util import random_noise
+import re
+import time
+import jieba
+import cv2
+import copy
+import json
+import string
+import nltk
+import requests
+from nltk.corpus import stopwords
+from nltk.tokenize import word_tokenize
+from nltk.stem import PorterStemmer
+from wordcloud import WordCloud
+from torchtext.vocab import Vectors, GloVe
+from PIL import Image
+import numpy as np
+from sklearn.datasets import load_boston, load_iris,fetch_california_housing
+from torchvision.datasets import FashionMNIST
+import torchvision.transforms as transforms
+from torchvision.datasets import STL10
+from torchvision.datasets import ImageFolder
+from torchvision import models
+from torchtext.legacy import data
+from torchtext.legacy.data import Field, TabularDataset, Iterator, BucketIterator
+from torch.optim import SGD,Adam
+from torchvision.utils import make_grid
+from sklearn.preprocessing import StandardScaler,MinMaxScaler
+from sklearn.metrics import accuracy_score,confusion_matrix,classification_report
+from sklearn.metrics import mean_squared_error,mean_absolute_error
+from sklearn.model_selection import train_test_split
+from sklearn.manifold import TSNE
+import seaborn as sns
+import pandas as pd
+from sklearn.svm import SVC
+from sklearn.decomposition import PCA
+import torchvision
+from torchvision.models import MobileNetV2
+import torchvision.utils as vutils
+import hiddenlayer as hl
+from torchviz import make_dot
+from tensorboardX import SummaryWriter
+from torchvision import transforms
+from visdom import Visdom
+from mpl_toolkits.mplot3d import Axes3D
+
+
+# a = torch.tensor([1.0,3])
+# print(a.dtype)   # 默认32位浮点数
+# print(torch.get_default_dtype())
+# b = torch.tensor([1,2,3],requires_grad=True)
+# B = b.pow(2).sum()
+# print(b.backward())
+# a = torch.arange(12).resize(2,6)
+# print(a)
+# b = torch.unsqueeze(a,dim=1)
+# print(b)
+# print(b.shape)
+# a = torch.arange(6).resize(2,3)
+# b = torch.linspace(0,10,6).resize(2,3)
+# c = torch.cat((a[:,0:2],a,b),dim=1)
+# print(c)
+# b = torch.linspace(0,10,6).resize(2,3)
+# a = torch.rand(3,4)
+# print(b)
+# print(torch.cumsum(b,dim=0))
+
+# 卷积
+# myim = Image.open(r'C:\Users\TR\PycharmProjects\pythonProject\lena_256.jpg')
+# mygray = np.array(myim.convert('L'),dtype=np.float32)
+# plt.figure(1,figsize=(6,6))
+# plt.imshow(mygray,cmap=plt.cm.gray)
+# print(type(mygray))
+# h,w = mygray.shape
+# mygray_t = torch.from_numpy(mygray.reshape(1,1,h,w))
+# kesize = 5
+# ker = torch.ones(kesize,kesize,dtype=torch.float32)*-1
+# ker[2,2] = 24
+# # print(ker)
+# ker = ker.reshape(1,1,kesize,kesize)
+# conv2d = torch.nn.Conv2d(1,2,(kesize,kesize),bias=False)
+# conv2d.weight.data[0] = ker
+# # print(conv2d.weight.data[1])
+# out = conv2d(mygray_t)
+# out_1 = out.data.squeeze()
+# plt.figure(2,figsize=(12,6))
+# plt.subplot(1,2,1)
+# plt.imshow(out_1[0],cmap=plt.cm.gray)
+# plt.subplot(1,2,2)
+# plt.imshow(out_1[1],cmap=plt.cm.gray)
+# plt.show()
+
+# 池化
+# maxpool = torch.nn.MaxPool2d(2,stride=2)
+# avgpool = torch.nn.AvgPool2d(2,stride=2)
+# adppool = torch.nn.AdaptiveAvgPool2d(output_size=(100, 100))
+# max_out = maxpool(out)
+# avg_out = avgpool(out)
+# adp_out = adppool(out)
+# max_out_img = max_out.squeeze()
+# avg_out_img = avg_out.squeeze()
+# adp_out_img = adp_out.data.squeeze()
+# plt.figure(2,figsize=(12,12))
+# plt.subplot(2,2,1)
+# plt.imshow(max_out_img[0].data,cmap=plt.cm.gray)
+# plt.subplot(2,2,2)
+# plt.imshow(max_out_img[1].data,cmap=plt.cm.gray)
+# plt.subplot(2,2,3)
+# plt.imshow(avg_out_img[0].data,cmap=plt.cm.gray)
+# plt.subplot(2,2,4)
+# plt.imshow(avg_out_img[1].data,cmap=plt.cm.gray)
+# plt.figure(3,figsize=(12,6))
+# plt.subplot(1,2,1)
+# plt.imshow(adp_out_img[0],cmap=plt.cm.gray)
+# plt.subplot(1,2,2)
+# plt.imshow(adp_out_img[1],cmap=plt.cm.gray)
+# plt.show()
+
+# 数据预处理
+
+# bos_x,bos_y = load_boston(return_X_y=True)
+# print(type(bos_x), type(bos_y))
+# # 转为pytorch所需的float32
+# tran_x = torch.from_numpy(bos_x.astype(np.float32))
+# tran_y = torch.from_numpy(bos_y.astype(np.float32))
+# train_set = Data.TensorDataset(tran_x,tran_y)
+# train_load = Data.DataLoader(dataset=train_set, batch_size=64, shuffle=True)
+# for step,(bx,by) in enumerate(train_load):
+#     if step:
+#         break
+#     print(step)
+#     print(bx.shape)
+#     print(by.shape)
+
+# iris_x,irix_y = load_iris(return_X_y=True)
+# train_x = torch.from_numpy(iris_x.astype(np.float32))
+# train_y = torch.from_numpy(irix_y.astype(np.float32))
+# train_set = Data.TensorDataset(train_x,train_y)
+# train_load = Data.DataLoader(dataset=train_set,batch_size=10,shuffle=True)
+# for step,(bx,by) in enumerate(train_load):
+#     if step:
+#         break
+#     print(bx.shape)
+#     print(by.shape)
+
+# 图像数据
+
+# train_data = FashionMNIST(root="E:\BaiduNetdiskDownload\程序\programs\data\FashionMNIST",
+#                           train=True,
+#                           transform=transforms.ToTensor(),
+#                           download=False)  # Totenser可以将图片像素换为0到1之间，将矩阵维度改为[C,H,W]
+# data_loader = Data.DataLoader(dataset=train_data,
+#                               shuffle=True,
+#                               batch_size=64,
+#                               num_workers=2)
+# print(len(data_loader))
+# test_data = FashionMNIST(root="E:\BaiduNetdiskDownload\程序\programs\data\FashionMNIST",
+#                           train=False,
+#                           transform=transforms.ToTensor(),
+#                           download=False)
+# print(type(test_data.data))
+# 将测试数据归一化，增加通道
+# test_data_x = test_data.data.type(torch.FloatTensor)/255.0
+# test_data_x = torch.unsqueeze(test_data_x,dim=1)
+# test_data_y = test_data.targets
+# print(test_data_x.shape,test_data_y.shape)
+# 文件夹读取数据
+# train_tranforms = transforms.Compose([
+#     transforms.RandomResizedCrop(224), # 随机长宽比裁剪为224X224
+#     transforms.RandomHorizontalFlip(), # 以概率0.5水平翻转
+#     transforms.ToTensor(),
+#     transforms.Normalize([0.485,0.456,0.406],
+#                          [0.229,0.224,0.225])
+# ])
+# train_data_dir = "E:\BaiduNetdiskDownload\程序\programs\data\chap2\imagedata"
+# train_data = ImageFolder(train_data_dir,transform=train_tranforms)
+# train_data_loader = Data.DataLoader(dataset=train_data,
+#                                     batch_size=4,
+#                                     shuffle=True,
+#                                     )
+# print('label:',train_data.targets)
+# for step,(bx,by) in enumerate(train_data_loader):
+#     if step>0:
+#         break
+# print(bx.shape,by.shape)
+# print('图像取值范围：', bx.min(),"~",bx.max())
+
+# 文本数据
+#  定义文本切分方法,使用空格切分即可
+# mytokenize = lambda x: x.split()
+# # 定义将文本转化为张量的相关操作
+# TEXT = data.Field(sequential=True,     # 表明输入的文本是字符
+#                   tokenize=mytokenize, # 使用自定义的分词方法
+#                   use_vocab=True,      # 创建一个词汇表
+#                   batch_first=True,    # batch优先的数据方式
+#                   fix_length=200       # 每个句子固定长度为200
+#                  )
+# # 定义将标签转化为张量的相关操作
+# LABEL = data.Field(sequential=False, # 表明输入的标签是数字
+#                    use_vocab=False,  # 不创建词汇表
+#                    pad_token=None,   # 不进行填充
+#                    unk_token=None    # 没有无法识别的字符
+#                   )
+# # 对所要读取的数据集的每列进行处理
+# text_data_fields = [
+#     ("label", LABEL),  # 对标签的操作
+#     ("text", TEXT)     # 对文本的操作
+# ]
+# # 读取数据
+# traindata,testdata = data.TabularDataset.splits(
+#     path="E:\BaiduNetdiskDownload\程序\programs\data\chap2\\textdata", format="csv",
+#     train="train.csv", fields=text_data_fields,
+#     test = "test.csv", skip_header=True
+# )
+# # 可以发现训练集和测试集中都有4和样本
+# print(len(traindata),len(testdata))
+# # 使用训练集构建单词表，不指定训练好的词向量
+# TEXT.build_vocab(traindata,max_size = 1000,vectors = None)
+# ## 将训练数据集定义为数据加载器，便于对模型进行优化
+# train_iter = data.BucketIterator(traindata,batch_size = 4)
+# test_iter = data.BucketIterator(testdata,batch_size = 4)
+# for step, batch in enumerate(train_iter):
+#     if step > 0:
+#         break
+# ## 针对一个batch 的数据，可以使用batch.label获得数据的类别标签
+# print("数据的类别标签:",batch.label)
+# ## batch.text是文本对应的编码向量
+# print("数据的尺寸:",batch.text.shape)
+
+# 优化器
+
+# Adam优化器，params为优化参数，一般为model.parameters（），betas：用于计算梯度及梯度平方的运行平均值的系数，exp防止除0，weight为L2惩罚
+# torch.optim.Adam(params,lr=0.01,betas=(0.9,0.999),eps=1e-08,weight_decay=0)
+# class TestNet(nn.Module):
+#     def __init__(self):
+#         super(TestNet,self).__init__()
+#         self.hidden = nn.Sequential(nn.Linear(13,10),nn.ReLU(),)
+#         self.regression = nn.Linear(10,1)
+#     def forward(self,x):
+#         x = self.hidden(x)
+#         out = self.regression(x)
+#         return out
+# testnet = TestNet()
+# optimizer = torch.optim.Adam(testnet.parameters(),lr = 0.001)
+# # 为不同层定义不同的学习率
+# optimizer = torch.optim.Adam([{"params": testnet.hidden.parameters(), "lr": 0.001},
+#                               {"params":testnet.regression.parameters(),"lr": 0.01}], lr=0.01)
+# # 下面给出优化器的常用调用过程
+# for input,target in dataset:
+#     optimizer.zero_grad()
+#     output = testnet(input)
+#     loos = loos_fn(output,target)
+#     loos.backward()
+#     optimizer.step()
+
+# 参数初始化
+
+# conv1 = nn.Conv2d(3,16,3)
+# nn.init.normal_(conv1.weight,mean=0,std=1)
+# nn.init.constant_(conv1.bias,val=0.1)
+# plt.figure(figsize=(8,6))
+# plt.hist(conv1.weight.data.numpy().reshape(-1,1),bins=30)
+# plt.show()
+# # 为网络层分别初始化不同值
+# class TestNet(nn.Module):
+#     def __init__(self):
+#         super(TestNet,self).__init__()
+#         self.cov1 = nn.Conv2d(3,16,3)
+#         self.hidden = nn.Sequential(nn.Linear(100,100),nn.ReLU(),
+#                                     nn.Linear(100,50),nn.ReLU())
+#         self.cla = nn.Linear(50,10)
+#     def forward(self,x):
+#         x = self.cov1(x)
+#         x = x.view(x.shape[0],-1)
+#         out = self.cla(self.hidden(x))
+#         return out
+# testnet = TestNet()
+# def init_weight(x):
+#     if type(x)==nn.Conv2d:
+#         nn.init.normal_(x.weight,mean=0,std=0.1)
+#     if type(x)==nn.Linear:
+#         nn.init.uniform_(x.weight,a=-0.1,b=0.1)
+#         x.bias.data.fill_(0.01)
+# testnet.apply(init_weight)
+
+# 网络搭建
+
+# bos_x, bos_y = load_boston(return_X_y=True)
+# plt.figure()
+# # plt.hist(bos_y, bins=20)
+# # plt.show()
+# # 数据标准化处理
+# ss = StandardScaler(with_std=True, with_mean=True)
+# bos_xs = ss.fit_transform(bos_x)
+# # 将数据预处理为可以使用pytorch进行批量训练的形式
+# # 训练集X转化为张量
+# train_x = torch.from_numpy(bos_xs.astype(np.float32))
+# train_y = torch.from_numpy(bos_y.astype(np.float32))
+# train_data = Data.TensorDataset(train_x, train_y)
+# # 定义一个数据加载器，将训练数据集进行批量处理
+# train_loader = Data.DataLoader(dataset=train_data,
+#                                shuffle=True,
+#                                batch_size=128,
+#                                )
+# # 定义网络
+# class MLPnet(nn.Module):
+#     def __init__(self):
+#         super(MLPnet, self).__init__()
+#         self.hidden1 = nn.Sequential(nn.Linear(13, 10, bias=True),
+#                                      nn.ReLU(), nn.Linear(10, 10), nn.ReLU())
+#         self.regression = nn.Linear(10,1)
+#     def forward(self,x):
+#         x = self.hidden1(x)
+#         x = self.regression(x)
+#         return x
+# mlp1 = MLPnet()
+# # print(mlp1)
+# optimizer = SGD(mlp1.parameters(),lr=0.001)
+# loss_fun = nn.MSELoss()
+# train_loss_list = []
+# for epoch in range(30):
+#     for step,(bx,by) in enumerate(train_loader):
+#         out = mlp1(bx).flatten()
+#         train_loss = loss_fun(out,by)
+#         optimizer.zero_grad()
+#         train_loss.backward()
+#         optimizer.step()
+#         train_loss_list.append(train_loss.item())
+# plt.plot(train_loss_list, "r-")
+# plt.title('Train Loss')
+# plt.show()
+# # 模型的保存
+# torch.save(mlp1,'保存路径/文件名.pkl')
+# # 只保存参数
+# torch.save(mlp1.state_dict(),"路径/名称.pkl")
+
+# 网络结构可视化
+
+# train_data = torchvision.datasets.MNIST(root="E:\BaiduNetdiskDownload\程序\programs\data\MNIST",
+#                                         train=True,
+#                                         transform=torchvision.transforms.ToTensor(),
+#                                         download=False)  # Totenser可以将图片像素换为0到1之间，将矩阵维度改为[C,H,W]
+# data_loader = Data.DataLoader(dataset=train_data,
+#                               shuffle=True,
+#                               batch_size=128,
+#                               )
+# test_data = torchvision.datasets.MNIST(root="E:\BaiduNetdiskDownload\程序\programs\data\MNIST",
+#                                        train=False,
+#                                        download=False)
+# # 将测试数据归一化，增加通道
+# test_data_x = test_data.data.type(torch.FloatTensor) / 255.0
+# test_data_x = torch.unsqueeze(test_data_x, dim=1)
+# test_data_y = test_data.targets
+# class Convnet(nn.Module):
+#     def __init__(self):
+#         super(Convnet, self).__init__()
+#         self.cov1 = nn.Sequential(nn.Conv2d(1, 16, kernel_size=3, stride=1, padding=1, ),
+#                                   nn.ReLU(), nn.AvgPool2d(kernel_size=2, stride=2)
+#                                   )
+#         self.cov2 = nn.Sequential(nn.Conv2d(16, 32, 3, 1, 1), nn.ReLU(),
+#                                   nn.MaxPool2d(2, 2)
+#                                   )
+#         self.fc = nn.Sequential(nn.Linear(in_features=32 * 7 * 7, out_features=128),
+#                                 nn.ReLU(), nn.Linear(128, 64), nn.ReLU(),
+#                                 )
+#         self.out = nn.Linear(64, 10)
+#
+#     def forward(self, x):
+#         x = self.cov1(x)
+#         x = self.cov2(x)
+#         x = x.view(x.size(0), -1)  # 在全连接前注意将卷积输出拍平
+#         x = self.fc(x)
+#         out1 = self.out(x)
+#         return out1
+# conv1 = Convnet()
+# print(conv1)
+# 使用hiddenlayer
+# hl_graph = hl.build_graph(conv1,torch.zeros([1,1,28,28]))
+# hl_graph.theme = hl.graph.THEMES["blue"].copy()
+# # 将可视化进行保存
+# hl_graph.save(r"E:\BaiduNetdiskDownload\程序\programs\data\chap4\mytu.png",format="png")
+
+# 使用torchviz
+# x = torch.randn(1,1,28,28).requires_grad_(True)
+# y = conv1(x)
+# conv1vis = make_dot(y,params=dict(list(conv1.named_parameters()) + [('x',x)]))
+# conv1vis.format = "png"
+# conv1vis.directory = r"C:\Users\TR\PycharmProjects\cov1"
+# conv1vis.view()
+
+# 对训练过程的可视化,使用tensorboard时查看结果要先cd到tensorboard.exe所在位置（换盘符要输入/d）,然后输入tensorboard --logdir=文件位置
+# SumWriter = SummaryWriter(logdir=r'E:\BaiduNetdiskDownload\程序\programs\data\chap4\log')
+# optimazer = torch.optim.Adam(conv1.parameters(), lr=0.0003)
+# loss_fuc = nn.CrossEntropyLoss()
+# trian_loss = 0
+# print_step = 100
+# for epoch in range(5):
+#     for step,(bx,by) in enumerate(data_loader):
+#         output = conv1(bx)
+#         loss = loss_fuc(output,by)
+#         optimazer.zero_grad()
+#         loss.backward()
+#         optimazer.step()
+#         trian_loss = trian_loss+loss
+#         # 计算迭代次数
+#         niter = epoch*len(data_loader)+step+1
+#         # 计算每经过print后的输出
+#         if niter%100 == 0:
+#             SumWriter.add_scalar('train_loss',trian_loss.item()/niter,global_step=niter)
+#             # 计算测试集精度
+#             output = conv1(test_data_x)
+#             _,pre_lab = torch.max(output,1)
+#             acc = accuracy_score(test_data_y,pre_lab)
+#             # 添加预测精度
+#             SumWriter.add_scalar('test_acc',acc.item(),niter)
+#             # 在日志添加可视化图像，使用当前batch，将其数据进行预处理
+#             bx_im = vutils.make_grid(bx,nrow=12)
+#             SumWriter.add_image('train image samole',bx_im,niter)
+#             # 使用直方图可视化参数分布
+#             for name,param in conv1.named_parameters():
+#                 SumWriter.add_histogram(name,param.data.numpy(),niter)
+# 使用hiddenlayer对训练过程可视化,开始仍同上进行优化器及损失函数的定义
+# 记录训练过程的指标
+# history1 = hl.History()
+# 使用canvas进行可视化
+# canvas1 = hl.Canvas()
+# print_step = 100
+# for epoch in range(5):
+#     for step, (bx, by) in enumerate(data_loader):
+#         output = conv1(bx)
+#         loss = loss_fuc(output, by)
+#         optimazer.zero_grad()
+#         loss.backward()
+#         optimazer.step()
+#         if step % print_step == 0:
+#             # 测试集精度
+#             output = conv1(test_data_x)
+#             _,pre_lab = torch.max(output, 1)
+#             acc = accuracy_score(test_data_y, pre_lab)
+#             history1.log((epoch, step),
+#                          train_loss=loss,
+#                          test_acc=acc,
+#                          hidden_weight=conv1.fc[2].weight)
+#             with canvas1:
+#                 canvas1.draw_plot(history1["train_loss"])
+#                 canvas1.draw_plot(history1["test_acc"])
+#                 canvas1.draw_image(history1["hidden_weight"])
+
+# 使用Visdom进行可视化,画图后，在terminal中输入python -m visdom.server，弹出网页查看
+# 演示中先加载了鸢尾花数据
+# vis = Visdom()
+# # 2D 散点图
+# vis.scatter(iris_x[:,0:2],Y=irix_y+1,win="window1",env="main")
+# # 3D 散点图
+# vis.scatter(iris_x[:,0:3],Y=irix_y+1,win="3d",env="main",opts=dict(markersize = 4,# 点大小
+#                                                                    xlabel = "特征1",ylabel = "特征2"
+#                                                                    )
+#             )
+# ## 添加折线图
+# x = torch.linspace(-6,6,100).view((-1,1))
+# sigmoid = torch.nn.Sigmoid()
+# sigmoidy = sigmoid(x)
+# tanh = torch.nn.Tanh()
+# tanhy = tanh(x)
+# relu = torch.nn.ReLU()
+# reluy = relu(x)
+# ## 连接3个张量
+# ploty = torch.cat((sigmoidy,tanhy,reluy),dim=1)
+# plotx = torch.cat((x,x,x),dim=1)
+# vis.line(Y=ploty,X=plotx,win="line plot",env="main",
+#          ##  设置线条的其它属性
+#          opts = dict(dash = np.array(["solid","dash","dashdot"]),
+#                      legend = ["Sigmoid","Tanh","ReLU"]))
+# ## 添加
+# x = torch.linspace(-6,6,100).view((-1,1))
+# y1 = torch.sin(x)
+# y2 = torch.cos(x)
+# ## 连接2个张量
+# plotx = torch.cat((y1,y2),dim=1)
+# ploty = torch.cat((x,x),dim=1)
+# vis.stem(X=plotx,Y=ploty,win="stem plot",env="main",
+#          ##  设置图例
+#          opts = dict(legend = ["sin","cos"],
+#                      title = "茎叶图"))
+# ## 添加热力图
+# # 计算鸢尾花数据的相关系数
+# iris_corr = torch.from_numpy(np.corrcoef(iris_x,rowvar=False))
+# vis.heatmap(iris_corr,win="heatmap",env="main",
+#             ## 设置每个特征的名称
+#             opts=dict(rownames = ["x1","x2","x3","x4"],
+#                      columnnames =["x1","x2","x3","x4"],
+#                      title = "热力图"))
+# ## 创建新的可视化图像环境，可视化图像
+# ##  获得一个batch的数据
+# for step, (b_x, b_y) in enumerate(data_loader):
+#     if step > 0:
+#         break
+#
+# ## 输出训练图像的尺寸和标签的尺寸
+# print(b_x.shape)
+# print(b_y.shape)
+# ## 可视化其中的一张图片
+# vis.image(b_x[0,:,:,:],win="one image", env="MyimagePlot",
+#           opts = dict(title = "一张图像"))
+# ## 它形成一个大小（B / nrow，nrow）的图像网格
+# vis.images(b_x,win="my batch image", env="MyimagePlot",
+#            nrow = 16,opts = dict(title = "一个批次的图像"))
+# ## 可视化一段文本
+# texts = """A flexible tool for creating, organizing,
+# and sharing visualizations of live,rich data.
+# Supports Torch and Numpy."""
+# vis.text(texts,win="text plot", env="MyimagePlot",
+#          opts = dict(title = "可视化文本"))
+
+# chapter 5
+
+# 读取垃圾邮件数据集，该数据集有4601个样本，每个样本记录了57个特征，标签代表是否为垃圾邮件
+# spam = pd.read_csv("E:\BaiduNetdiskDownload\程序\programs\data\chap5\spambase.csv")
+# print(spam.head())
+# 计算各自样本数量
+# print(pd.value_counts(spam.label))
+# 下面对数据进行按照3:1切分训练集和测试集
+# X = spam.iloc[:,0:57].values
+# y = spam.label.values
+# X_train,X_test,y_train,y_test = train_test_split(X,y,test_size=0.25,random_state=123)
+# 下面对数据进行标准化处理
+# scales = MinMaxScaler(feature_range=(0,1))
+# X_train_s = scales.fit_transform(X_train)
+# X_test_s = scales.fit_transform(X_test)
+# 对特征进行可视化
+# colname = spam.columns.values[:-1]
+# plt.figure(figsize=(20,14))
+# for ii in range(len(colname)):
+#     plt.subplot(7,9,ii+1)
+#     sns.boxplot(x = y_train,y = X_train_s[:,ii])
+#     plt.title(colname[ii])
+# plt.subplots_adjust(hspace=0.4)
+# plt.show()
+# 定义MLP网络
+# class MLPnet(nn.Module):
+#     def __init__(self):
+#         super(MLPnet, self).__init__()
+#         self.hidden1 = nn.Sequential(nn.Linear(57,30,bias=True),nn.ReLU())
+#         self.hidden2 = nn.Sequential(nn.Linear(30,10),nn.ReLU())
+#         self.classfication = nn.Sequential(nn.Linear(10,2),nn.Sigmoid())
+#     def forward(self,x):
+#         fc1 = self.hidden1(x)
+#         fc2 = self.hidden2(fc1)
+#         out = self.classfication(fc2)
+#         return fc1,fc2,out
+# mlpc = MLPnet()
+# make_dot可视化
+# x = torch.randn(1,57).requires_grad_(True)
+# y = mlpc(x)
+# mymlp = make_dot(y,params=dict(list(mlpc.named_parameters())+[('x',x)]))
+# mymlp.format = "png"
+# mymlp.directory = r"C:\Users\TR\PycharmProjects\mlp1"
+# mymlp.view()
+# 使用未预处理的数据进行训练和测试
+# X_train_n = torch.from_numpy(X_train_s.astype(np.float32)) # 使用预处理数据则改为X_train_s与X_test_s
+# y_train_t = torch.from_numpy(y_train.astype(np.int64))
+# X_test_n = torch.from_numpy(X_test_s.astype(np.float32))
+# y_test_t = torch.from_numpy(y_test.astype(np.int64))
+# train_data = Data.TensorDataset(X_train_n,y_train_t)
+# train_data_loader = Data.DataLoader(dataset=train_data,
+#                                     shuffle=True,
+#                                     batch_size=64,)
+# optimazer = torch.optim.Adam(mlpc.parameters(),lr=0.01)
+# loss = nn.CrossEntropyLoss()
+# history1 = hl.History()
+# # 使用canvas进行可视化
+# canvas1 = hl.Canvas()
+# print_step = 25
+# for epoch in range(5):
+#     for step, (bx, by) in enumerate(train_data_loader):
+#         _,_,output = mlpc(bx)
+#         train_loss = loss(output, by)
+#         optimazer.zero_grad()
+#         train_loss.backward()
+#         optimazer.step()
+#         niter = epoch*len(train_data_loader)+step+1
+#         if niter % print_step == 0:
+#             # 测试集精度
+#             _,_,output = mlpc(X_test_n)
+#             _,pre_lab = torch.max(output, 1)
+#             test_acc = accuracy_score(y_test_t, pre_lab)
+#             history1.log(niter,
+#                          train_loss=train_loss,
+#                          test_acc=test_acc,
+#                          )
+#             with canvas1:
+#                 canvas1.draw_plot(history1["train_loss"])
+#                 canvas1.draw_plot(history1["test_acc"])
+#     # 在测试集计算精度
+#     _, _, output = mlpc(X_test_n)
+#     _, prelab = torch.max(output, 1)
+#     test_acc = accuracy_score(y_test_t, prelab)
+#     print("test accuracy:", test_acc)
+
+# 全连接进行回归
+# 以加州房价为数据集进行回归测试
+# housedata = fetch_california_housing()
+# # 数据集切分
+# X_train,X_test,y_train,y_test = train_test_split(housedata.data,housedata.target,test_size=0.3,random_state=42)
+# # 数据标准化
+# scale = StandardScaler()
+# X_train_s = scale.fit_transform(X_train)
+# X_test_s = scale.fit_transform(X_test)
+# # 数据集化为数据表，方便探索数据情况
+# housedatadf = pd.DataFrame(data=X_train_s,columns=housedata.feature_names)
+# housedatadf["target"] = y_train
+# # 数据表可以分析数据间的相关性，绘制相关性热力图
+# # datacor = np.corrcoef(housedatadf.values,rowvar=0)
+# # datacor1 = pd.DataFrame(data=datacor,columns=housedatadf.columns,index=housedatadf.columns)
+# # plt.figure(figsize=(8,6))
+# # ax = sns.heatmap(datacor1,square=True,annot=True,fmt=".3f",linewidths=.5,
+# #                  cmap="YlGnBu",cbar_kws={"fraction":0.046,"pad":0.03})
+# # plt.show()
+# # 训练数据的转换与加载
+# train_xt = torch.from_numpy(X_train_s.astype(np.float32))
+# train_yt = torch.from_numpy(y_train.astype(np.float32))
+# test_xt = torch.from_numpy(X_test_s.astype(np.float32))
+# test_yt = torch.from_numpy(y_test.astype(np.float32))
+# traindata = Data.TensorDataset(train_xt,train_yt)
+# testdata = Data.TensorDataset(test_xt,test_yt)
+# Dataloader = Data.DataLoader(dataset=traindata,shuffle=True,
+#                              batch_size=64,)
+# # 定义训练网络
+# class MLPnet2(nn.Module):
+#     def __init__(self):
+#         super(MLPnet2, self).__init__()
+#         self.hidden1 = nn.Linear(8,100)
+#         self.hidden2 = nn.Linear(100,100)
+#         self.hidden3 = nn.Linear(100,50)
+#         self.predict = nn.Linear(50,1)
+#     def forward(self,x):
+#         x = F.relu(self.hidden1(x))
+#         x = F.relu(self.hidden2(x))
+#         x = F.relu(self.hidden3(x))
+#         out = self.predict(x)
+#         return out[:,0]
+# mlprge = MLPnet2()
+# optimizer = torch.optim.SGD(mlprge.parameters(),lr=0.01)
+# loss_fu = nn.MSELoss()
+# train_loss_all = []
+# for epoch in range(30):
+#     train_loss = 0
+#     train_num = 0
+#     for step,(bx,by) in enumerate(Dataloader):
+#         output = mlprge(bx)
+#         loss = loss_fu(output,by)
+#         optimizer.zero_grad()
+#         loss.backward()
+#         optimizer.step()
+#         train_loss += loss.item()*bx.size(0)
+#         train_num += bx.size(0)
+#     train_loss_all.append(train_loss/train_num)
+#     pre_y = mlprge(test_xt)
+#     pre_y = pre_y.data.numpy()
+#     mae = mean_absolute_error(y_test,pre_y)
+#     print("在测试集上的绝对值误差为:", mae)
+# plt.figure(figsize=(10,6))
+# plt.plot(train_loss_all,"ro-",label="Train_loss")
+# plt.legend()
+# plt.grid()
+# plt.xlabel('epoch')
+# plt.ylabel('Loss')
+# plt.show()
+
+# chapter 6 卷积神经网络
+# 主要介绍空洞卷积和转置卷积
+# 空洞卷积，即对卷积核进行填0处理，增大感受野，n-空洞卷积，则原卷积核相邻元素相隔n-1个位置，
+# 等效卷积核大小：K=k+(k−1)∗(r−1) 其中，K代表等效卷积核尺寸，k代表实际卷积核尺寸，而r代表dilation，空洞卷积的参数。
+# 转置卷积简单而言就是普通卷积的逆运算，还原卷积的输入，但可以保证在尺寸还原，内容不一定能够还原
+
+# Le-net识别Fashion-MINISt
+# train_data = FashionMNIST(root="E:\BaiduNetdiskDownload\程序\programs\data\FashionMNIST",
+#                           train=True,
+#                           transform=transforms.ToTensor(),
+#                           download=False)  # Totenser可以将图片像素换为0到1之间，将矩阵维度改为[C,H,W]
+# data_loader = Data.DataLoader(dataset=train_data,
+#                               shuffle=True,
+#                               batch_size=64,
+#                               )
+# test_data = FashionMNIST(root="E:\BaiduNetdiskDownload\程序\programs\data\FashionMNIST",
+#                           train=False,
+#                           transform=transforms.ToTensor(),
+#                           download=False)
+# 将测试数据归一化，增加通道
+# test_data_x = test_data.data.type(torch.FloatTensor)/255.0
+# test_data_x = torch.unsqueeze(test_data_x,dim=1)
+# test_data_y = test_data.targets
+# class_label = train_data.classes
+# print(test_data_x.shape,test_data_y.shape)
+# class Le_net(nn.Module):
+#     def __init__(self):
+#         super(Le_net, self).__init__()
+#         self.cov1 = nn.Sequential(nn.Conv2d(1,16,3,1,1),nn.ReLU(),
+#                                   nn.AvgPool2d(2,2))
+#         self.cov2 = nn.Sequential(nn.Conv2d(16,32,3,1),nn.ReLU()
+#                                   ,nn.AvgPool2d(2,2))
+#         self.classfier = nn.Sequential(nn.Linear(32*6*6,256), nn.ReLU(),
+#                                        nn.Linear(256,128),nn.ReLU(),
+#                                        nn.Linear(128,10),
+#                                        )
+#     def forward(self,x):
+#         x = self.cov1(x)
+#         x = self.cov2(x)
+#         x = x.view(x.size(0),-1)
+#         out = self.classfier(x)
+#         return out
+# lnet = Le_net()
+# 下面定义训练函数，通过该函数实现对网络优化器等各项训练参数定义，并且在函数中实现对精度的保存及模型参数的保存
+# def train_model(model,traindataloader,train_rate,criterion,optimizer,num_epoch = 25):
+#     # 计算使用的batch数量
+#     batch_num = len(traindataloader)
+#     train_batch_num = round(batch_num*train_rate)
+#     # 复制模型的参数
+#     best_model_weight = copy.deepcopy(model.state_dict())
+#     best_acc = 0
+#     train_loss_all = []
+#     train_acc_all = []
+#     val_loss_all = []
+#     val_acc_all = []
+#     since = time.time()
+#     for epoch in range(num_epoch):
+#         print('Epoch: {}/{}'.format(epoch,num_epoch-1))
+#         print('-'*10)
+#         # 每个epoch有两个阶段
+#         train_loss = 0.0
+#         train_corrects = 0
+#         train_num = 0
+#         val_loss = 0.0
+#         val_corrects = 0
+#         val_num = 0
+#         for step,(bx,by) in enumerate(traindataloader):
+#             if step<train_batch_num:
+#                 model.train()
+#                 output = model(bx)
+#                 pre_lab = torch.argmax(output,1) # 返回每行概率最大值的索引
+#                 loss = criterion(output,by)
+#                 optimizer.zero_grad()
+#                 loss.backward()
+#                 optimizer.step()
+#                 train_loss += loss.item()*bx.size(0)
+#                 train_corrects += torch.sum(pre_lab==by.data)
+#                 train_num += bx.size(0)
+#             else:
+#                 model.eval() # 评估模式
+#                 output = model(bx)
+#                 pre_lab = torch.argmax(output,1)
+#                 loss = criterion(output,by)
+#                 val_loss += loss.item()*bx.size(0)
+#                 val_corrects += torch.sum(pre_lab==by.data)
+#                 val_num += bx.size(0)
+#         # 计算一个epoch上训练集和验证集的损失及精度
+#         train_loss_all.append(train_loss/train_num)
+#         train_acc_all.append(train_corrects.double().item()/train_num)
+#         val_loss_all.append(val_loss/val_num)
+#         val_acc_all.append(val_corrects.double().item()/val_num)
+#         print('{} Train Loss: {:.4f}  Train Acc: {:.4f}'.format(
+#             epoch, train_loss_all[-1], train_acc_all[-1]))
+#         print('{} Val Loss: {:.4f}  val Acc: {:.4f}'.format(
+#             epoch, val_loss_all[-1], val_acc_all[-1]))
+#         # 拷贝模型最高精度下的参数
+#         if val_acc_all[-1] > best_acc:
+#             best_acc = val_acc_all[-1]
+#             best_model_weight = copy.deepcopy(model.state_dict())
+#         time_use = time.time() - since
+#         print("Train and val complete in {:.0f}m {:.0f}s".format(
+#                 time_use // 60, time_use % 60))
+#     # 使用最好模型的参数
+#     model.load_state_dict(best_model_weight)
+#     train_process = pd.DataFrame(
+#         data={"epoch": range(num_epoch),
+#         "train_loss_all": train_loss_all,
+#         "val_loss_all": val_loss_all,
+#         "train_acc_all": train_acc_all,
+#         "val_acc_all": val_acc_all})
+#     return model, train_process
+# 训练模型
+# optimizer = torch.optim.Adam(lnet.parameters(),lr=0.003)
+# criterion = nn.CrossEntropyLoss()
+# lnet,train_process = train_model(lnet,data_loader,0.8,criterion,optimizer,num_epoch=5)
+# print(train_process)
+# plt.figure(figsize=(12,4))
+# plt.subplot(1,2,1)
+# plt.plot(train_process.epoch,train_process.train_loss_all,
+#          "ro-",label = "Train loss")
+# plt.plot(train_process.epoch,train_process.val_loss_all,
+#          "bs-",label = "Val loss")
+# plt.legend()
+# plt.xlabel("epoch")
+# plt.ylabel("Loss")
+# plt.subplot(1,2,2)
+# plt.plot(train_process.epoch,train_process.train_acc_all,
+#          "ro-",label = "Train acc")
+# plt.plot(train_process.epoch,train_process.val_acc_all,
+#          "bs-",label = "Val acc")
+# plt.xlabel("epoch")
+# plt.ylabel("acc")
+# plt.legend()
+# plt.show()
+## 对测试集进行预测，并可视化预测效果
+# lnet.eval()
+# output = lnet(test_data_x)
+# pre_lab = torch.argmax(output,1)
+# acc = accuracy_score(test_data_y,pre_lab)
+# print("在测试集上的预测精度为:",acc)
+# ## 计算混淆矩阵并可视化
+# conf_mat = confusion_matrix(test_data_y,pre_lab)
+# df_cm = pd.DataFrame(conf_mat, index=class_label,
+#                      columns=class_label)
+# heatmap = sns.heatmap(df_cm, annot=True, fmt="d",cmap="YlGnBu")
+# heatmap.yaxis.set_ticklabels(heatmap.yaxis.get_ticklabels(), rotation=0, ha='right')
+# heatmap.xaxis.set_ticklabels(heatmap.xaxis.get_ticklabels(), rotation=45, ha='right')
+# plt.ylabel('True label')
+# plt.xlabel('Predicted label')
+# plt.show()
+
+# 空洞卷积
+# class MyConvdilaNet(nn.Module):
+#     def __init__(self):
+#         super(MyConvdilaNet, self).__init__()
+#         ## 定义第一个卷积层
+#         self.conv1 = nn.Sequential(
+#             ## 卷积后： (1*28*28) ->(16*26*26)
+#             nn.Conv2d(1, 16, 3, 1, 1, dilation=2),
+#             nn.ReLU(),  # 激活函数
+#             nn.AvgPool2d(2, 2),  ##(16*26*26)->(16*13*13)
+#         )
+#         ## 定义第二个卷积层
+#         self.conv2 = nn.Sequential(
+#             nn.Conv2d(16, 32, 3, 1, 0, dilation=2),  ## 卷积操作(16*13*13)->(32*9*9)
+#             nn.ReLU(),  # 激活函数
+#             nn.AvgPool2d(2, 2)  ## 最大值池化操作(32*9*9)->(32*4*4)
+#         )
+#         self.classifier = nn.Sequential(
+#             nn.Linear(32 * 4 * 4, 256),
+#             nn.ReLU(),
+#             nn.Linear(256, 128),
+#             nn.ReLU(),
+#             nn.Linear(128, 10)
+#         )
+
+    ## 定义网络的向前传播路径
+    # def forward(self, x):
+    #     x = self.conv1(x)
+    #     x = self.conv2(x)
+    #     x = x.view(x.size(0), -1)  # 展平多维的卷积图层
+    #     output = self.classifier(x)
+    #     return output
+# myconvdilanet = MyConvdilaNet()
+# ## 对模型进行训练
+# optimizer = torch.optim.Adam(myconvdilanet.parameters(), lr=0.0003)
+# criterion = nn.CrossEntropyLoss()   # 损失函数
+# myconvdilanet,train_process = train_model(
+#     myconvdilanet,train_loader, 0.8,
+#     criterion, optimizer, num_epochs=5)
+# # 可视化模型训练过程中
+# plt.figure(figsize=(12,4))
+# plt.subplot(1,2,1)
+# plt.plot(train_process.epoch,train_process.train_loss_all,
+#          "ro-",label = "Train loss")
+# plt.plot(train_process.epoch,train_process.val_loss_all,
+#          "bs-",label = "Val loss")
+# plt.legend()
+# plt.xlabel("epoch")
+# plt.ylabel("Loss")
+# plt.subplot(1,2,2)
+# plt.plot(train_process.epoch,train_process.train_acc_all,
+#          "ro-",label = "Train acc")
+# plt.plot(train_process.epoch,train_process.val_acc_all,
+#          "bs-",label = "Val acc")
+# plt.xlabel("epoch")
+# plt.ylabel("acc")
+# plt.legend()
+# plt.show()
+## 计算混淆矩阵并可视化
+## 对测试集进行预测，并可视化预测效果
+# myconvdilanet.eval()
+# output = myconvdilanet(test_data_x)
+# pre_lab = torch.argmax(output,1)
+# acc = accuracy_score(test_data_y,pre_lab)
+# print("在测试集上的预测精度为:",acc)
+# conf_mat = confusion_matrix(test_data_y,pre_lab)
+# df_cm = pd.DataFrame(conf_mat, index=class_label,
+#                      columns=class_label)
+# heatmap = sns.heatmap(df_cm, annot=True, fmt="d",cmap="YlGnBu")
+# heatmap.yaxis.set_ticklabels(heatmap.yaxis.get_ticklabels(), rotation=0, ha='right')
+# heatmap.xaxis.set_ticklabels(heatmap.xaxis.get_ticklabels(), rotation=45, ha='right')
+# plt.ylabel('True label')
+# plt.xlabel('Predicted label')
+# plt.show()
+
+# 使用VGG-16
+
+# 导入预训练的网络
+# vgg16 = models.vgg16(pretrained=True)
+# # print(vgg16)  # 可以通过print来查看网络的输入通道与全连接层输入，这样就可以进行迁移学习
+# # 获取特征提取层
+# vgg = vgg16.features
+# # 将特征层冻结，不进行训练
+# for param in vgg.parameters():
+#     param.requires_grad_(False)
+# 进行新网络的组成
+# class Myvgg(nn.Module):
+#     def __init__(self):
+#         super(Myvgg, self).__init__()
+#         self.vgg = vgg
+#         #添加全连接层
+#         self.classifier = nn.Sequential(nn.Linear(25088,512),nn.ReLU(),
+#                                         nn.Linear(512,256),nn.ReLU(),
+#                                         nn.Dropout(p=0.5),
+#                                         nn.Linear(256,10),nn.Softmax(dim=1),)
+#     def forward(self,x):
+#         x = self.vgg(x)
+#         x = x.view(x.size(0),-1)
+#         out = self.classifier(x)
+#         return out
+# myvgg = Myvgg()
+# 准备数据
+# train_data_s = transforms.Compose([transforms.RandomResizedCrop(224),
+#                                    transforms.RandomHorizontalFlip(),
+#                                    transforms.ToTensor(),
+#                                    transforms.Normalize([0.485,0.456,0.406],[0.229,0.224,0.225])
+#                                    ])
+# val_data_s = transforms.Compose([transforms.Resize(256),
+#                                  transforms.CenterCrop(224),
+#                                  transforms.ToTensor(),
+#                                  transforms.Normalize([0.485,0.456,0.406],[0.229,0.224,0.225])
+#                                  ])
+# train_data_dir = r"E:\BaiduNetdiskDownload\程序\programs\data\chap6\10-monkey-species\training"
+# train_data = ImageFolder(train_data_dir,transform=train_data_s)
+# train_data_loader = Data.DataLoader(train_data,batch_size=32,
+#                                     shuffle=True,)
+# # 验证集
+# val_data_dir = r"E:\BaiduNetdiskDownload\程序\programs\data\chap6\10-monkey-species\validation"
+# val_data = ImageFolder(val_data_dir,transform=val_data_s)
+# val_data_loader = Data.DataLoader(val_data,batch_size=32,shuffle=True)
+# for step,(bx,by) in enumerate(train_data_loader):
+#     if step>0:
+#         break
+#     # 可视化一个batch
+#     mean = np.array([0.485,0.456,0.406])
+#     std = np.array([0.229,0.224,0.406])
+#     plt.figure(figsize=(12,6))
+#     for ii in np.arange(len(by)):
+#         plt.subplot(4,8,ii+1)
+#         image = bx[ii,:,:,:].numpy().transpose((1,2,0))
+#         image = std*image+mean
+#         image = np.clip(image,0,1)
+#         plt.imshow(image)
+#         plt.title(by[ii].data.numpy())
+#         plt.axis("off")
+#     plt.subplots_adjust(hspace=0.3)
+#     plt.show()
+# optimizer = torch.optim.Adam(myvgg.parameters(),lr=0.003)
+# loss_fu = nn.CrossEntropyLoss()
+# outvgg,train_process = train_model(myvgg,train_data_loader,0.9,loss_fu,optimizer,5)
+# plt.figure(figsize=(12,4))
+# plt.subplot(1,2,1)
+# plt.plot(train_process.epoch,train_process.train_loss_all,
+#          "ro-",label = "Train loss")
+# plt.plot(train_process.epoch,train_process.val_loss_all,
+#          "bs-",label = "Val loss")
+# plt.legend()
+# plt.xlabel("epoch")
+# plt.ylabel("Loss")
+# plt.subplot(1,2,2)
+# plt.plot(train_process.epoch,train_process.train_acc_all,
+#          "ro-",label = "Train acc")
+# plt.plot(train_process.epoch,train_process.val_acc_all,
+#          "bs-",label = "Val acc")
+# plt.xlabel("epoch")
+# plt.ylabel("acc")
+# plt.legend()
+# plt.show()
+
+# 使用卷积网络进行清高分类
+
+# 对文本进行情感分析，数据为正向和反向的评论
+## 读取训练数据和测试数据
+# def load_text_data(path):
+#     ## 获取文件夹的最后一个字段
+#     text_data = []
+#     label = []
+#     for dset in ["pos","neg"]:
+#         path_dset = os.path.join(path,dset)
+#         path_list = os.listdir(path_dset)
+#         ## 读取文件夹下的pos或neg文件
+#         for fname in path_list:
+#             if fname.endswith(".txt"):
+#                 filename = os.path.join(path_dset,fname)
+#                 with open(filename,errors='ignore') as f:
+#                     text_data.append(f.read())
+#             if dset == "pos":
+#                 label.append(1)
+#             else:
+#                 label.append(0)
+#     ##  输出读取的文本和对应的标签
+#     return np.array(text_data),np.array(label)
+# ## 读取训练集和测试集
+# train_path = r"E:\BaiduNetdiskDownload\程序\programs\data\chap6\imdb\train"
+# train_text,train_label = load_text_data(train_path)
+# test_path = r"E:\BaiduNetdiskDownload\程序\programs\data\chap6\imdb\test"
+# test_text,test_label = load_text_data(test_path)
+# # print(len(train_text),len(train_label))
+# # print(len(test_text),len(test_label))
+# # print(train_text[0:2])
+# ## 对文本数据进行预处理
+# def text_preprocess(text_data):
+#     text_pre = []
+#     for text1 in text_data:
+#         ## 去除指定的字符 <br /><br />
+#         text1 = re.sub("<br /><br />", " ", text1)
+#         ## 转化为小写,去除数字,去除标点符号,去除空格
+#         text1 = text1.lower()
+#         text1 = re.sub("\d+", "", text1)
+#         text1 = text1.translate(
+#             str.maketrans("","", string.punctuation.replace("'","")))
+#         text1 = text1.strip()
+#         text_pre.append(text1)
+#     return np.array(text_pre)
+# train_text_pre = text_preprocess(train_text)
+# test_text_pre = text_preprocess(test_text)
+# # print(train_text[10000])
+# # print("="*10)
+# # print(train_text_pre[10000])
+# # 文本符号化处理,去除停用词，词干化处理
+# def stop_stem_word(datalist,stop_words,stemer):
+#     datalist_pre = []
+#     for text in datalist:
+#         text_words = word_tokenize(text)
+#         ## 去除停用词
+#         text_words = [word for word in text_words
+#                       if not word in stop_words]
+#         ## 删除带“‘”的词语
+#         text_words = [word for word in text_words
+#                       if len(re.findall("'",word)) == 0]
+#         ## 词干化处理
+# #         text_words = [stemmer.stem(word) for word in text_words]
+#         datalist_pre.append(text_words)
+#     return np.array(datalist_pre)
+# ## 文本符号化处理,去除停用词，词干化处理
+# stop_words = stopwords.words("english")
+# stop_words = set(stop_words)
+# stemmer= PorterStemmer()
+# train_text_pre2 = stop_stem_word(train_text_pre,stop_words,stemmer)
+# test_text_pre2 = stop_stem_word(test_text_pre,stop_words,stemmer)
+# # print(train_text_pre[10000])
+# # print("="*10)
+# # print(train_text_pre2[10000])
+# ## 将处理好的文本保存到CSV文件中
+# texts = [" ".join(words) for words in train_text_pre2]
+# traindatasave = pd.DataFrame({"text":texts,
+#                               "label":train_label})
+# texts = [" ".join(words) for words in test_text_pre2]
+# testdatasave = pd.DataFrame({"text":texts,
+#                               "label":test_label})
+# traindatasave.to_csv(r"E:\BaiduNetdiskDownload\程序\programs\data\chap6\imdb_train1.csv",index=False)
+# testdatasave.to_csv(r"E:\BaiduNetdiskDownload\程序\programs\data\chap6\imdb_test1.csv",index=False)
+# # print(traindatasave.head())
+# # print(testdatasave.head())
+# ## 将预处理好的文本数据转化为数据表
+# traindata = pd.DataFrame({"train_text":train_text,
+#                           "train_word":train_text_pre2,
+#                           "train_label":train_label})
+# # testdata = pd.DataFrame({"test_text":test_text,
+# #                          "test_word":test_text_pre2})
+# traindata.head()
+# ## 计算每个个影评使用词的数量
+# train_word_num = [len(text) for text in train_text_pre2]
+# traindata["train_word_num"] = train_word_num
+# ##可视化影评词语长度的分布
+# plt.figure(figsize=(8,5))
+# _ = plt.hist(train_word_num,bins=100)
+# plt.xlabel("word number")
+# plt.ylabel("Freq")
+# traindata.head()
+# ## 使用词云可视化两种情感的词频差异
+# plt.figure(figsize=(16,10))
+# for ii in np.unique(train_label):
+#     ## 准备每种情感的所有词语
+#     print(ii)
+#     text = np.array(traindata.train_word[traindata.train_label == ii])
+#     text = " ".join(np.concatenate(text))
+#     plt.subplot(1,2,ii+1)
+#     ## 生成词云
+#     wordcod = WordCloud(margin=5,width=1800, height=1000,
+#                         max_words=500, min_font_size=5,
+#                         background_color='white',
+#                         max_font_size=250)
+#     wordcod.generate_from_text(text)
+#     plt.imshow(wordcod)
+#     plt.axis("off")
+#     if ii == 1:
+#         plt.title("Positive")
+#     else:
+#         plt.title("Negative")
+#     plt.subplots_adjust(wspace=0.05)
+# plt.show()
+
+# 使用训练好的VGG16
+## 导入预训练好的VGG16网络
+# vgg16 = models.vgg16(pretrained=True)
+# ## 读取一张图片,并对其进行可视化
+# im = Image.open(r"E:\BaiduNetdiskDownload\程序\programs\data\chap6\大象.jpg")
+# imarray = np.asarray(im) / 255.0
+# # plt.figure()
+# # plt.imshow(imarray)
+# # plt.show()
+# ## 对一张图像处理为vgg16网络可以处理的形式
+# data_transforms = transforms.Compose([
+#     transforms.Resize((224,224)),# 重置图像分辨率
+#     transforms.ToTensor(),# 转化为张量并归一化至[0-1]
+#     transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+# ])
+# input_im = data_transforms(im).unsqueeze(0)
+# # print("input_im.shape:",input_im.shape)
+# ## 使用钩子获取分类层的2个特征
+# ## 定义一个辅助函数，来获取指定层名称的特征
+# activation = {} ## 保存不同层的输出
+# def get_activation(name):
+#     def hook(model, input, output):
+#         activation[name] = output.detach()
+#     return hook
+# ## 获取中间的卷积后的图像特征
+# vgg16.eval()
+# ##  第四层，经过第一次最大值池化
+# vgg16.features[4].register_forward_hook(get_activation("maxpool1"))
+# _ = vgg16(input_im)
+# maxpool1 = activation["maxpool1"]
+# # print("获取特征的尺寸为:",maxpool1.shape)
+# ## 对中间层进行可视化,可视化64个特征映射
+# # plt.figure(figsize=(11,6))
+# # for ii in range(maxpool1.shape[1]):
+# #     ## 可视化每张手写体
+# #     plt.subplot(6,11,ii+1)
+# #     plt.imshow(maxpool1.data.numpy()[0,ii,:,:],cmap="gray")
+# #     plt.axis("off")
+# # plt.subplots_adjust(wspace=0.1, hspace=0.1)
+# # plt.show()
+# ## 获取更深层次的卷积后的图像特征
+# vgg16.features[21].register_forward_hook(get_activation("layer21_conv"))
+# _ = vgg16(input_im)
+# layer21_conv = activation["layer21_conv"]
+# ## 对中间层进行可视化,只可视化前72个特征映射
+# # plt.figure(figsize=(12,6))
+# # for ii in range(72):
+# #     ## 可视化每张手写体
+# #     plt.subplot(6,12,ii+1)
+# #     plt.imshow(layer21_conv.data.numpy()[0,ii,:,:],cmap="gray")
+# #     plt.axis("off")
+# # plt.subplots_adjust(wspace=0.1, hspace=0.1)
+# # plt.show()
+# # 使用预训练好的VGG16网络对图像进行预测。
+# ## 获取vgg模型训练时对应的1000类的类别标签
+# # 从网页链接中获取类别标签
+# with open('E:\BaiduNetdiskDownload\程序\programs\data\chap6\imagenet_class_index.json','r',encoding='utf8')as fp:
+#     response = json.load(fp)
+# # response = json.loads(r"E:\BaiduNetdiskDownload\程序\programs\data\chap6\imagenet_class_index.json")
+# labels = {int(key): value for key, value in response.items()}
+# im_pre = vgg16(input_im)
+# ## 计算预测top-5的可能性
+# softmax = nn.Softmax(dim=1)
+# im_pre_prob = softmax(im_pre)
+# prob,prelab = torch.topk(im_pre_prob,5)
+# prob = prob.data.numpy().flatten()
+# prelab = prelab.numpy().flatten()
+# # for ii,lab in enumerate(prelab):
+# #     print("index: ", lab ," label: ",labels[lab]," ||",prob[ii])
+# # 可视化图像的类激活热力图 Grad-CAM
+# ## 定义一个萌购输出最后的卷机层输出和梯度的新的网络
+# class MyVgg16(nn.Module):
+#     def __init__(self):
+#         super(MyVgg16, self).__init__()
+#
+#         # 使用预训练好的VGG16模型
+#         self.vgg = models.vgg16(pretrained=True)
+#         # 切分vgg6模型，便于获取卷积层的输出
+#         self.features_conv = self.vgg.features[:30]
+#         # 使用原始的最大值池化层
+#         self.max_pool = self.vgg.features[30]
+#         self.avgpool = self.vgg.avgpool
+#         # 使用vgg16的分类层
+#         self.classifier = self.vgg.classifier
+#         # 生成梯度占位符
+#         self.gradients = None
+#
+#     # 获取地图的钩子函数
+#     def activations_hook(self, grad):
+#         self.gradients = grad
+#
+#     def forward(self, x):
+#         x = self.features_conv(x)
+#         # 注册钩子
+#         h = x.register_hook(self.activations_hook)
+#         # 对卷积后的输出使用最大值池化
+#         x = self.max_pool(x)
+#         x = self.avgpool(x)
+#         x = x.view((1, -1))
+#         x = self.classifier(x)
+#         return x
+#
+#     # 获取梯度的方法
+#     def get_activations_gradient(self):
+#         return self.gradients
+#
+#     # 获取卷机层输出的方法
+#     def get_activations(self, x):
+#         return self.features_conv(x)
+#
+#
+# # 初始化网络
+# vggcam = MyVgg16()
+# # 设置网络的模式
+# vggcam.eval()
+# ## 计算网络对图像的预测值
+# im_pre = vggcam(input_im)
+# ## 计算预测top-5的可能性
+# softmax = nn.Softmax(dim=1)
+# im_pre_prob = softmax(im_pre)
+# prob, prelab = torch.topk(im_pre_prob, 5)
+# prob = prob.data.numpy().flatten()
+# prelab = prelab.numpy().flatten()
+# # for ii, lab in enumerate(prelab):
+# #     print("index: ", lab, " label: ", labels[lab], " ||", prob[ii])
+# ## 这里预测结果和前面的一样，可能性最大的是第101个编号
+# # 获取相对于模型参数的输出梯度
+# im_pre[:, prelab[0]].backward()
+# # 获取模型的梯度
+# gradients = vggcam.get_activations_gradient()
+# # 计算梯度相应通道的均值
+# mean_gradients = torch.mean(gradients, dim=[0, 2, 3])
+# # 获取图像在相应卷积层输出的卷积特征
+# activations = vggcam.get_activations(input_im).detach()
+# # m每个通道乘以相应的梯度均值
+# for i in range(len(mean_gradients)):
+#     activations[:, i, :, :] *= mean_gradients[i]
+# # 计算所有通道的均值输出得到热力图
+# heatmap = torch.mean(activations, dim=1).squeeze()
+# # 使用relu函数作用于热力图
+# heatmap = F.relu(heatmap)
+# # 对热力图进行标准化
+# heatmap /= torch.max(heatmap)
+# heatmap = heatmap.numpy()
+# # 可视化热力图
+# plt.matshow(heatmap)
+# ## 将Grad－CAM热力图融合到原始图像上
+# img = cv2.imread(r'C:\Users\TR\PycharmProjects\pythonProject\daxiang.jpg') # cv2读文件一定不能包含中文字符
+# heatmap = cv2.resize(heatmap, (img.shape[1], img.shape[0]))
+# heatmap = np.uint8(255 * heatmap)
+# heatmap = cv2.applyColorMap(heatmap, cv2.COLORMAP_JET)
+# Grad_cam_img = heatmap * 0.4 + img
+# Grad_cam_img = Grad_cam_img / Grad_cam_img.max()
+# ## 可视化图像
+# b,g,r = cv2.split(Grad_cam_img)
+# Grad_cam_img = cv2.merge([r,g,b])
+# plt.figure()
+# plt.imshow(Grad_cam_img)
+# plt.show()
+
+# chapter 7  循环神经网络
+
+## 准备使用RNN网络识别手写字体的数据集Minist
+# ## 准备训练数据集
+# train_data  = torchvision.datasets.MNIST(
+#     root = r"E:\BaiduNetdiskDownload\程序\programs\data\MNIST", # 数据的路径
+#     train = True, # 只使用训练数据集
+#     # 将数据转化为torch使用的张量,取汁范围为［0，1］
+#     transform  = transforms.ToTensor(),
+#     download= False # 因为数据已经下载过，所以这里不再下载
+# )
+# ## 定义一个数据加载器
+# train_loader = Data.DataLoader(
+#     dataset = train_data, ## 使用的数据集
+#     batch_size=64, # 批处理样本大小
+#     shuffle = True, # 每次迭代前打乱数据
+# )
+# ## 准备需要使用的测试数据集
+# test_data  = torchvision.datasets.MNIST(
+#     root = r"E:\BaiduNetdiskDownload\程序\programs\data\MNIST", # 数据的路径
+#     train = False, # 不使用训练数据集
+#     transform  = transforms.ToTensor(),
+#     download= False # 因为数据已经下载过，所以这里不再下载
+# )
+# ## 定义一个数据加载器
+# test_loader = Data.DataLoader(
+#     dataset = test_data, ## 使用的数据集
+#     batch_size=64, # 批处理样本大小
+#     shuffle = True, # 每次迭代前打乱数据
+# )
+#
+# # 定义RNN调用类
+# class RNNimc(nn.Module):
+#     def __init__(self, input_dim, hidden_dim, layer_dim, output_dim):
+#         """
+#         input_dim:输入数据的维度(图片每行的数据像素点)
+#         hidden_dim: RNN神经元个数
+#         layer_dim: RNN的层数
+#         output_dim:隐藏层输出的维度(分类的数量)
+#         """
+#         super(RNNimc, self).__init__()
+#         self.hidden_dim = hidden_dim  ## RNN神经元个数
+#         self.layer_dim = layer_dim  ## RNN的层数
+#         # RNN
+#         self.rnn = nn.RNN(input_dim, hidden_dim, layer_dim,
+#                           batch_first=True, nonlinearity='relu')
+#
+#         # 连接全连阶层
+#         self.fc1 = nn.Linear(hidden_dim, output_dim)
+#
+#     def forward(self, x):
+#         # x:[batch, time_step, input_dim]
+#         # 本例中time_step＝图像所有像素数量／input_dim
+#         # out:[batch, time_step, output_size]
+#         # h_n:[layer_dim, batch, hidden_dim]
+#         out, h_n = self.rnn(x, None)  # None表示h0会使用全0进行初始化
+#         # 选取最后一个时间点的out输出
+#         out = self.fc1(out[:, -1, :])
+#         return out
+# MyRNN = RNNimc(28,128,1,10)
+# # print(MyRNN)
+# hl_graph = hl.build_graph(MyRNN,torch.zeros([1,28,28]))
+# hl_graph.theme = hl.graph.THEMES["blue"].copy()
+# # hl_graph.save(r"E:\BaiduNetdiskDownload\程序\programs\data\chap4\RNN.png",format="png")
+# # 训练模型
+# optimizer = torch.optim.RMSprop(params=MyRNN.parameters(),lr=0.0003)
+# loss_fuc = nn.CrossEntropyLoss()
+# train_loss_all = []
+# train_acc_all = []
+# test_acc_all = []
+# test_loss_all = []
+# nun_epoch = 10
+# for epoch in range(nun_epoch):
+#     print('Epoch {}/{}'.format(epoch,nun_epoch-1))
+#     MyRNN.train()
+#     corrects = 0
+#     train_nun = 0
+#     for step,(bx,by) in enumerate(train_loader):
+#         xdata = bx.view(-1,28,28)
+#         out = MyRNN(xdata)
+#         pre_lab = torch.argmax(out,1)
+#         loss = loss_fuc(out,by)
+#         optimizer.zero_grad()
+#         loss.backward()
+#         optimizer.step()
+#         loss += loss.item()*bx.size(0)
+#         corrects += torch.sum(pre_lab==by.data)
+#         train_nun += bx.size(0)
+#     train_loss_all.append(loss / train_nun)
+#     train_acc_all.append(corrects.double().item() / train_nun)
+#     print('{} Train Loss: {:.4f}  Train Acc: {:.4f}'.format(
+#         epoch, train_loss_all[-1], train_acc_all[-1]))
+#     MyRNN.eval()
+#     corrects = 0
+#     test_num = 0
+#     for step, (b_x, b_y) in enumerate(test_loader):
+#         # input :[batch, time_step, input_dim]
+#         xdata = b_x.view(-1, 28, 28)
+#         output = MyRNN(xdata)
+#         pre_lab = torch.argmax(output, 1)
+#         loss = loss_fuc(output, b_y)
+#         loss += loss.item() * b_x.size(0)
+#         corrects += torch.sum(pre_lab == b_y.data)
+#         test_num += b_x.size(0)
+#         ## 计算经过一个epoch的训练后在测试集上的损失和精度
+#     test_loss_all.append(loss / test_num)
+#     test_acc_all.append(corrects.double().item() / test_num)
+#     print('{} Test Loss: {:.4f}  Test Acc: {:.4f}'.format(
+#         epoch, test_loss_all[-1], test_acc_all[-1]))
+
+# 使用LSTM对中文新闻分类
+# 调入中文
+# fronts = FontProperties(fname="/Library/Fonts/华文细黑.ttf")
+# ## 读取训练、验证和测试数据集
+# train_df = pd.read_csv(r"E:\BaiduNetdiskDownload\程序\programs\data\chap7\cnews\cnews.train.txt",sep="\t",
+#                        header=None,names = ["label","text"])
+# val_df = pd.read_csv(r"E:\BaiduNetdiskDownload\程序\programs\data\chap7\cnews\cnews.val.txt",sep="\t",
+#                        header=None,names = ["label","text"])
+# test_df = pd.read_csv(r"E:\BaiduNetdiskDownload\程序\programs\data\chap7\cnews\cnews.test.txt",sep="\t",
+#                        header=None,names = ["label","text"])
+# stop_words = pd.read_csv(r"E:\BaiduNetdiskDownload\程序\programs\data\chap7\cnews\中文停用词库.txt",
+#                          header=None,names = ["text"])
+# print(train_df.head(5))
+# ## 对中文文本数据进行预处理，去除一些不需要的字符，分词，去停用词，等操作
+# def chinese_pre(text_data):
+#     ## 字母转化为小写,去除数字,
+#     text_data = text_data.lower()
+#     # 数字替换为空格
+#     text_data = re.sub("\d+", "", text_data)
+#     ## 分词,使用精确模式
+#     text_data = list(jieba.cut(text_data,cut_all=False))
+#     ## 去停用词和多余空格
+#     text_data = [word.strip() for word in text_data if word not in stop_words.text.values]
+#     ## 处理后的词语使用空格连接为字符串
+#     text_data = " ".join(text_data)
+#     return text_data
+# ## 对数据进行分词
+# train_df["cutword"] = train_df.text.apply(chinese_pre)
+# val_df["cutword"] = val_df.text.apply(chinese_pre)
+# test_df["cutword"] = test_df.text.apply(chinese_pre)
+# print(train_df.cutword.head())
+# labelMap = {"体育": 0,"娱乐": 1,"家居": 2,"房产": 3,"教育": 4,
+#             "时尚": 5,"时政": 6,"游戏": 7,"科技": 8,"财经": 9}
+# train_df["labelcode"] =train_df["label"].map(labelMap)
+# val_df["labelcode"] =val_df["label"].map(labelMap)
+# test_df["labelcode"] =test_df["label"].map(labelMap)
+# ## 使用torchtext库进行数据准备
+# # 定义文件中对文本和标签所要做的操作
+# """
+# sequential=True:表明输入的文本时字符，而不是数值字
+# tokenize="spacy":使用spacy切分词语
+# use_vocab=True: 创建一个词汇表
+# batch_first=True: batch优先的数据方式
+# fix_length=400 :每个句子固定长度为400
+# """
+# ## 定义文本切分方法，因为前面已经做过处理，所以直接使用空格切分即可
+# mytokenize = lambda x: x.split()
+# TEXT = data.Field(sequential=True, tokenize=mytokenize,
+#                   include_lengths=True, use_vocab=True,
+#                   batch_first=True, fix_length=400)
+# LABEL = data.Field(sequential=False, use_vocab=False,
+#                    pad_token=None, unk_token=None)
+# ## 对所要读取的数据集的列进行处理
+# text_data_fields = [
+#     ("labelcode", LABEL), # 对标签的操作
+#     ("cutword", TEXT) # 对文本的操作
+# ]
+# ## 读取数据
+# traindata,valdata,testdata = data.TabularDataset.splits(
+#     path=r"E:\BaiduNetdiskDownload\程序\programs\data\chap7", format="csv",
+#     train="cnews_train2.csv", fields=text_data_fields,
+#     validation="cnews_val2.csv",
+#     test = "cnews_test2.csv", skip_header=True
+# )
+# ## 使用训练集构建单词表,没有预训练好的词项量
+# TEXT.build_vocab(traindata,max_size=20000,vectors = None)
+# LABEL.build_vocab(traindata)
+# ## 可视化训练集中的前50个高频词
+# word_fre = TEXT.vocab.freqs.most_common(n=50)
+# word_fre = pd.DataFrame(data=word_fre,columns=["word","fre"])
+# word_fre.plot(x="word", y="fre", kind="bar",legend=False,figsize=(12,7))
+# plt.xticks(rotation = 90,fontproperties = fonts,size = 10)
+# print("词典的词数:",len(TEXT.vocab.itos))
+# print("前10个单词:\n",TEXT.vocab.itos[0:10])
+# ## 类别标签的数量和类别
+# print("类别标签情况:",LABEL.vocab.freqs)
+# ## 定义一个迭代器，将类似长度的示例一起批处理。
+# BATCH_SIZE = 64
+# train_iter = data.BucketIterator(traindata,batch_size = BATCH_SIZE)
+# val_iter = data.BucketIterator(valdata,batch_size = BATCH_SIZE)
+# test_iter = data.BucketIterator(testdata,batch_size = BATCH_SIZE)
+# class LSTMNet(nn.Module):
+#     def __init__(self, vocab_size,embedding_dim, hidden_dim, layer_dim, output_dim):
+#         """
+#         vocab_size:词典长度
+#         embedding_dim:词向量的维度
+#         hidden_dim: RNN神经元个数
+#         layer_dim: RNN的层数
+#         output_dim:隐藏层输出的维度(分类的数量)
+#         """
+#         super(LSTMNet,self).__init__()
+#         self.hidden_dim = hidden_dim # 神经元个数
+#         self.layer_dim = layer_dim # 层数
+#         # 对文本进行词向量处理
+#         self.embedding = nn.Embedding(vocab_size,embedding_dim)
+#         # lstm+全连接
+#         self.lstm = nn.LSTM(embedding_dim,hidden_dim,layer_dim,batch_first=True)
+#         self.fc1 = nn.Linear(hidden_dim,output_dim)
+#     def forward(self,x):
+#         embeds = self.embedding(x)
+#         # r_out shape (batch, time_step, output_size)
+#         # h_n shape (n_layers, batch, hidden_size)   LSTM 有两个 hidden states, h_n 是分线, h_c 是主线
+#         # h_c shape (n_layers, batch, hidden_size)
+#         r_out,(h_n,h_c) = self.lstm(embeds,None)
+#         out = self.fc1(r_out[:,-1,:])
+#         return out
+# vocab_size = len(TEXT.vocab)
+# embedding_dim = 100
+# hidden_dim = 128
+# layer_dim = 1
+# output_dim = 10
+# lstmmodel = LSTMNet(vocab_size, embedding_dim, hidden_dim, layer_dim, output_dim)
+# print(lstmmodel)
+#
+#
+# ## 定义网络的训练过程函数
+# def train_model2(model, traindataloader, valdataloader, criterion,
+#                  optimizer, num_epochs=10, ):
+#     """
+#     model:网络模型；traindataloader:训练数据集;
+#     valdataloader:验证数据集，;criterion：损失函数；optimizer：优化方法；
+#     num_epochs:训练的轮数
+#     """
+#     train_loss_all = []
+#     train_acc_all = []
+#     val_loss_all = []
+#     val_acc_all = []
+#     since = time.time()
+#     for epoch in range(num_epochs):
+#         print('-' * 10)
+#         print('Epoch {}/{}'.format(epoch, num_epochs - 1))
+#         # 每个epoch有两个阶段,训练阶段和验证阶段
+#         train_loss = 0.0
+#         train_corrects = 0
+#         train_num = 0
+#         val_loss = 0.0
+#         val_corrects = 0
+#         val_num = 0
+#         model.train()  ## 设置模型为训练模式
+#         for step, batch in enumerate(traindataloader):
+#             textdata, target = batch.cutword[0], batch.labelcode.view(-1)
+#             out = model(textdata)
+#             pre_lab = torch.argmax(out, 1)  # 预测的标签
+#             loss = criterion(out, target)  # 计算损失函数值
+#             optimizer.zero_grad()
+#             loss.backward()
+#             optimizer.step()
+#             train_loss += loss.item() * len(target)
+#             train_corrects += torch.sum(pre_lab == target.data)
+#             train_num += len(target)
+#         ## 计算一个epoch在训练集上的损失和精度
+#         train_loss_all.append(train_loss / train_num)
+#         train_acc_all.append(train_corrects.double().item() / train_num)
+#         print('{} Train Loss: {:.4f}  Train Acc: {:.4f}'.format(
+#             epoch, train_loss_all[-1], train_acc_all[-1]))
+#
+#         ## 计算一个epoch的训练后在验证集上的损失和精度
+#         model.eval()  ## 设置模型为训练模式评估模式
+#         for step, batch in enumerate(valdataloader):
+#             textdata, target = batch.cutword[0], batch.labelcode.view(-1)
+#             out = model(textdata)
+#             pre_lab = torch.argmax(out, 1)
+#             loss = criterion(out, target)
+#             val_loss += loss.item() * len(target)
+#             val_corrects += torch.sum(pre_lab == target.data)
+#             val_num += len(target)
+#         ## 计算一个epoch在训练集上的损失和精度
+#         val_loss_all.append(val_loss / val_num)
+#         val_acc_all.append(val_corrects.double().item() / val_num)
+#         print('{} Val Loss: {:.4f}  Val Acc: {:.4f}'.format(
+#             epoch, val_loss_all[-1], val_acc_all[-1]))
+#     train_process = pd.DataFrame(
+#         data={"epoch": range(num_epochs),
+#               "train_loss_all": train_loss_all,
+#               "train_acc_all": train_acc_all,
+#               "val_loss_all": val_loss_all,
+#               "val_acc_all": val_acc_all})
+#     return model, train_process
+# # 定义优化器
+# optimizer = torch.optim.Adam(lstmmodel.parameters(), lr=0.0003)
+# loss_func = nn.CrossEntropyLoss()   # 损失函数
+# ## 对模型进行迭代训练,对所有的数据训练EPOCH轮
+# lstmmodel,train_process = train_model2(
+#     lstmmodel,train_iter,val_iter,loss_func,optimizer,num_epochs=10)
+# ## 可视化模型训练过程中
+# plt.figure(figsize=(18,6))
+# plt.subplot(1,2,1)
+# plt.plot(train_process.epoch,train_process.train_loss_all,
+#          "r.-",label = "Train loss")
+# plt.plot(train_process.epoch,train_process.val_loss_all,
+#          "bs-",label = "Val loss")
+# plt.legend()
+# plt.xlabel("Epoch number",size = 13)
+# plt.ylabel("Loss value",size = 13)
+# plt.subplot(1,2,2)
+# plt.plot(train_process.epoch,train_process.train_acc_all,
+#          "r.-",label = "Train acc")
+# plt.plot(train_process.epoch,train_process.val_acc_all,
+#          "bs-",label = "Val acc")
+# plt.xlabel("Epoch number",size = 13)
+# plt.ylabel("Acc",size = 13)
+# plt.legend()
+# plt.show()
+# ## 对测试集进行预测并计算精度
+# lstmmodel.eval() ## 设置模型为训练模式评估模式
+# test_y_all = torch.LongTensor()
+# pre_lab_all = torch.LongTensor()
+# for step,batch in enumerate(test_iter):
+#     textdata,target = batch.cutword[0],batch.labelcode.view(-1)
+#     out = lstmmodel(textdata)
+#     pre_lab = torch.argmax(out,1)
+#     test_y_all = torch.cat((test_y_all,target)) ##测试集的标签
+#     pre_lab_all = torch.cat((pre_lab_all,pre_lab))##测试集的预测标签
+#
+# acc = accuracy_score(test_y_all,pre_lab_all)
+# print("在测试集上的预测精度为:",acc)
+# ## 计算混淆矩阵并可视化
+# class_label = ["体育","娱乐","家居","房产","教育",
+#                "时尚","时政","游戏","科技","财经"]
+# conf_mat = confusion_matrix(test_y_all,pre_lab_all)
+# df_cm = pd.DataFrame(conf_mat, index=class_label, columns=class_label)
+# heatmap = sns.heatmap(df_cm, annot=True, fmt="d",cmap="YlGnBu")
+# heatmap.yaxis.set_ticklabels(heatmap.yaxis.get_ticklabels(), rotation=0,
+#                              ha='right',fontproperties = fonts)
+# heatmap.xaxis.set_ticklabels(heatmap.xaxis.get_ticklabels(), rotation=45,
+#                              ha='right',fontproperties = fonts)
+# plt.ylabel('True label')
+# plt.xlabel('Predicted label')
+# plt.show()
+# plt.figure(figsize=(10,7))
+# heatmap = sns.heatmap(df_cm, annot=True, fmt="d",cmap="YlGnBu")
+# heatmap.yaxis.set_ticklabels(heatmap.yaxis.get_ticklabels(), rotation=0,
+#                              ha='right',fontproperties = fonts)
+# heatmap.xaxis.set_ticklabels(heatmap.xaxis.get_ticklabels(), rotation=45,
+#                              ha='right',fontproperties = fonts)
+# plt.ylabel('True label')
+# plt.xlabel('Predicted label')
+# plt.show()
+
+# chapter 8
+# 自编码器，可由线性层或卷积层组成，输入输出相同，中间降维后升维，目的是完成特征提取、降维或图像去噪，无需标签，损失由输入输出相似度产生
+# 线性层自编码器
+
+## 使用手写体数据
+## 准备训练数据集
+# train_data  = torchvision.datasets.MNIST(
+#     root = r"E:\BaiduNetdiskDownload\程序\programs\data\MNIST", # 数据的路径
+#     train = True, # 只使用训练数据集
+#     transform  = transforms.ToTensor(),
+#     download= False
+# )
+# ## 将图像数据转化为向量数据
+# train_data_x = train_data.data.type(torch.FloatTensor) / 255.0
+# train_data_x = train_data_x.reshape(train_data_x.shape[0],-1)
+# train_data_y = train_data.targets
+# # train_data = Data.TensorDataset(train_data_x)
+#
+# ## 定义一个数据加载器
+# train_loader = Data.DataLoader(
+#     dataset = train_data_x, ## 使用的数据集
+#     batch_size=64, # 批处理样本大小
+#     shuffle = True, # 每次迭代前打乱数据
+# )
+# ## 对测试数据集进行导入
+# test_data = torchvision.datasets.MNIST(
+#     root = r"E:\BaiduNetdiskDownload\程序\programs\data\MNIST", # 数据的路径
+#     train = False, # 只使用训练数据集
+#     transform  = transforms.ToTensor(),
+#     download= False
+# )
+# ## 为测试数据添加一个通道纬度,获取测试数据的X和Y
+# test_data_x = test_data.data.type(torch.FloatTensor) / 255.0
+# test_data_x = test_data_x.reshape(test_data_x.shape[0],-1)
+# test_data_y = test_data.targets
+# # print("训练数据集:",train_data_x.shape)
+# # print("测试数据集:",test_data_x.shape)
+# ## 可视化一个batch的图像内容
+# ##  获得一个batch的数据
+# for step, b_x in enumerate(train_loader):
+#     if step > 0:
+#         break
+#
+# ## 可视化一个batch的图像
+# # im = make_grid(b_x.reshape((-1,1,28,28)))
+# # im = im.data.numpy().transpose((1,2,0))
+# # plt.figure()
+# # plt.imshow(im)
+# # plt.axis("off")
+# # plt.show()
+#
+#
+# class EnDecoder(nn.Module):
+#     def __init__(self):
+#         super(EnDecoder, self).__init__()
+#         ## 定义Encoder
+#         self.Encoder = nn.Sequential(
+#             nn.Linear(784, 512),
+#             nn.ReLU(),
+#             nn.Linear(512, 256),
+#             nn.ReLU(),
+#             nn.Linear(256, 128),
+#             nn.ReLU(),
+#             nn.Linear(128, 10),
+#             nn.ReLU(),
+#         )
+#         ## 定义Decoder
+#         self.Decoder = nn.Sequential(
+#             nn.Linear(10, 128),
+#             nn.ReLU(),
+#             nn.Linear(128, 256),
+#             nn.ReLU(),
+#             nn.Linear(256, 512),
+#             nn.ReLU(),
+#             nn.Linear(512, 784),
+#             nn.Sigmoid(),
+#         )
+#
+#     ## 定义网络的向前传播路径
+#     def forward(self, x):
+#         encoder = self.Encoder(x)
+#         decoder = self.Decoder(encoder)
+#         return encoder, decoder
+#
+#
+# ## 输出我们的网络结构
+# edmodel = EnDecoder()
+# # 定义优化器
+# LR = 0.003
+# optimizer = torch.optim.Adam(edmodel.parameters(), lr=0.003)
+# loss_func = nn.MSELoss()  # 损失函数
+# # 记录训练过程的指标
+# history1 = hl.History()
+# # 使用Canvas进行可视化
+# canvas1 = hl.Canvas()
+# train_val_num = np.int(len(train_loader) * 0.75)
+# train_num = 0
+# val_num = 0
+# ## 对模型进行迭代训练,对所有的数据训练EPOCH轮
+# for epoch in range(5):
+#     train_loss_epoch = 0
+#     val_loss_epoch = 0
+#     ## 对训练数据的迭代器进行迭代计算
+#     edmodel.train()
+#     for step, b_x in enumerate(train_loader):
+#         if step < train_val_num:
+#             ## 使用每个batch进行训练模型
+#             _, output = edmodel(b_x)  # CNN在训练batch上的输出
+#             loss = loss_func(output, b_x)  # 平方根误差
+#             optimizer.zero_grad()  # 每个迭代步的梯度初始化为0
+#             loss.backward()  # 损失的后向传播，计算梯度
+#             optimizer.step()  # 使用梯度进行优化
+#             train_loss_epoch += loss.item() * b_x.size(0)
+#             train_num = train_num + b_x.size(0)
+#         else:
+#             ## 使用每个batch进行验证模型
+#             edmodel.eval()
+#             _, output = edmodel(b_x)  # CNN在训练batch上的输出
+#             loss = loss_func(output, b_x)  # 平方根误差
+#             val_loss_epoch += loss.item() * b_x.size(0)
+#             val_num = val_num + b_x.size(0)
+#     ## 计算一个epoch的损失
+#     train_loss = train_loss_epoch / train_num
+#     val_loss = val_loss_epoch / val_num
+#
+#     ## 保存每个epoch上的输出loss
+#     history1.log(epoch, train_loss=train_loss,
+#                  val_loss=val_loss)
+#     # 可视网络训练的过程
+#     # with canvas1:
+#     #     canvas1.draw_plot([history1["train_loss"], history1["val_loss"]])
+# ## 预测测试集前100张图像的输出
+# edmodel.eval()
+# _,test_decoder = edmodel(test_data_x[0:100,:])
+## 可视化编码前的图像
+# plt.figure(figsize=(6,6))
+# for ii in range(test_decoder.shape[0]):
+#     plt.subplot(10,10,ii+1)
+#     im = test_data_x[ii,:]
+#     im = im.data.numpy().reshape(28,28)
+#     plt.imshow(im,cmap=plt.cm.gray)
+#     plt.axis("off")
+## 可视化编码后的图像
+# plt.figure(figsize=(6,6))
+# for ii in range(test_decoder.shape[0]):
+#     plt.subplot(10,10,ii+1)
+#     im = test_decoder[ii,:]
+#     im = im.data.numpy().reshape(28,28)
+#     plt.imshow(im,cmap=plt.cm.gray)
+#     plt.axis("off")
+# plt.show()
+# 获取前500个样本的自编吗后的特征，并对数据进行可视化
+# edmodel.eval()
+# TEST_num = 500
+# test_encoder,_ = edmodel(test_data_x[0:TEST_num,:])
+# print("test_encoder.shape:",test_encoder.shape)
+# ## 将10个纬度的特征使用降维方法进行可视化
+# test_encoder_tsne = TSNE(n_components=2).fit_transform(test_encoder.data.numpy())
+# ## 将特征进行可视化
+# plt.figure(figsize=(8,6))
+# # 可视化前设置坐标系的取值范围
+# plt.xlim([min(test_encoder_tsne[:,0]-1),max(test_encoder_tsne[:,0])+1])
+# plt.ylim([min(test_encoder_tsne[:,1]-1),max(test_encoder_tsne[:,1])+1])
+# for ii in range(test_encoder_tsne.shape[0]):
+#     text = test_data_y.data.numpy()[ii]
+#     plt.text(test_encoder_tsne[ii,0],test_encoder_tsne[ii,1],str(text),fontsize=12,
+#             bbox=dict(boxstyle="round",facecolor=plt.cm.Set1(text), alpha=0.7))
+# plt.show()
+# # 自编码后的特征＋SVM VS PCA降维＋SVM分类的效果对比
+# ## 自编码后的特征训练集和测试集
+# train_ed_x,_ = edmodel(train_data_x)
+# train_ed_x = train_ed_x.data.numpy()
+# train_y = train_data_y.data.numpy()
+# test_ed_x,_ = edmodel(test_data_x)
+# test_ed_x = test_ed_x.data.numpy()
+# test_y = test_data_y.data.numpy()
+# print(train_ed_x.shape)
+# print(train_y.shape)
+# ## PCA降维获得的训练集和测试集前3个主成分
+# pcamodel = PCA(n_components=3,random_state=10)
+# train_pca_x= pcamodel.fit_transform(train_data_x.data.numpy())
+# test_pca_x = pcamodel.transform(test_data_x.data.numpy())
+# print(train_pca_x.shape)
+# ## 使用自编码数据建立分类器,训练和预测
+# encodersvc = SVC(kernel="rbf",random_state=123)
+# encodersvc.fit(train_ed_x,train_y)
+# edsvc_pre = encodersvc.predict(test_ed_x)
+# print(classification_report(test_y,edsvc_pre))
+# ## 使用PCA降维数据建立分类器,训练和预测
+# pcasvc = SVC(kernel="rbf",random_state=None)
+# pcasvc.fit(train_pca_x,train_y)
+# pcasvc_pre = pcasvc.predict(test_pca_x)
+# print(classification_report(test_y,pcasvc_pre))
+#
+# # 图像去噪
+# ## 定义一个将bin文件处理为图像数据的函数
+# def read_image(data_path):
+#     with open(data_path, 'rb') as f:
+#         data1 = np.fromfile(f, dtype=np.uint8)
+#         ## 图像[数量，通道，宽，高]
+#         images = np.reshape(data1, (-1, 3, 96, 96))
+#         ## 图像转化为RGB的形式，方便使用matplotlib进行可视化
+#         images = np.transpose(images, (0, 3, 2, 1))
+#     ## 输出的图像取值在0～1之间
+#     return images / 255.0
+# # 读取训练数据集,5000张96*96*3的图像
+# data_path = "data/STL10/stl10_binary/train_X.bin"
+# images = read_image(data_path)
+# print("images.shape:",images.shape)
+# ## 为数据添加高斯噪声
+# def gaussian_noise(images,sigma,seed=1243):
+#     """sigma:噪声标准差"""
+#     sigma2 = sigma**2 / (255**2)  ## 噪声方差
+#     images_noisy = np.zeros_like(images)
+#     for ii in range(images.shape[0]):
+#         image = images[ii]
+#         ## 使用skimage库中的random_noise函数添加噪声
+#         noise_im = random_noise(image,mode="gaussian", var=sigma2,seed=seed,clip=True)
+#         images_noisy[ii] = noise_im
+#     return images_noisy
+# images_noise = gaussian_noise(images,30,seed=1243)
+# print("images_noise:",images_noise.min(),"~",images_noise.max())
+# ## 可视化其中的部分图像
+# ## 不带噪声的图像
+# plt.figure(figsize=(8,4))
+# for ii in np.arange(32):
+#     plt.subplot(4,8,ii+1)
+#     plt.imshow(images[ii,...])
+#     plt.axis("off")
+# plt.show()
+# ## 带噪声的图像
+# plt.figure(figsize=(8,4))
+# for ii in np.arange(32):
+#     plt.subplot(4,8,ii+1)
+#     plt.imshow(images_noise[ii,...])
+#     plt.axis("off")
+# plt.show()
+# ## 数据准备为Pytorch可用的形式
+# ## 转化为［样本，通道，高，宽］的数据形式
+# data_Y = np.transpose(images, (0, 3, 2, 1))
+# data_X = np.transpose(images_noise, (0, 3, 2, 1))
+# ## 将数据集切分为训练集和验证集
+# X_train, X_val, y_train, y_val = train_test_split(
+#     data_X,data_Y,test_size = 0.2,random_state = 123)
+# ## 将图像数据转化为向量数据
+# X_train = torch.tensor(X_train, dtype=torch.float32)
+# y_train = torch.tensor(y_train, dtype=torch.float32)
+# X_val = torch.tensor(X_val, dtype=torch.float32)
+# y_val = torch.tensor(y_val, dtype=torch.float32)
+# ## 将X和Y转化为数据集合
+# train_data = Data.TensorDataset(X_train,y_train)
+# val_data = Data.TensorDataset(X_val,y_val)
+#
+# print("X_train.shape:",X_train.shape)
+# print("y_train.shape:",y_train.shape)
+# print("X_val.shape:",X_val.shape)
+# print("y_val.shape:",y_val.shape)
+# ## 定义一个数据加载器
+# train_loader = Data.DataLoader(
+#     dataset = train_data, ## 使用的数据集
+#     batch_size=32, # 批处理样本大小
+#     shuffle = True, # 每次迭代前打乱数据
+#     num_workers = 4, # 使用4个进程
+# )
+#
+# ## 定义一个数据加载器
+# val_loader = Data.DataLoader(
+#     dataset = val_data, ## 使用的数据集
+#     batch_size=32, # 批处理样本大小
+#     shuffle = True, # 每次迭代前打乱数据
+#     num_workers = 4, # 使用4个进程
+# )
+#
+# for step, (b_x, b_y) in enumerate(train_loader):
+#     if step > 0:
+#         break
+#
+# ## 输出训练图像的尺寸和标签的尺寸
+# print(b_x.shape)
+# print(b_y.shape)
+#
+#
+# class DenoiseAutoEncoder(nn.Module):
+#     def __init__(self):
+#         super(DenoiseAutoEncoder, self).__init__()
+#         ## 定义Encoder
+#         self.Encoder = nn.Sequential(
+#             nn.Conv2d(in_channels=3, out_channels=64,
+#                       kernel_size=3, stride=1, padding=1),  # [,64,96,96]
+#             nn.ReLU(),
+#             nn.BatchNorm2d(64),
+#             nn.Conv2d(64, 64, 3, 1, 1),  # [,64,96,96]
+#             nn.ReLU(),
+#             nn.BatchNorm2d(64),
+#             nn.Conv2d(64, 64, 3, 1, 1),  # [,64,96,96]
+#             nn.ReLU(),
+#             nn.MaxPool2d(2, 2),  # [,64,48,48]
+#             nn.BatchNorm2d(64),
+#
+#             nn.Conv2d(64, 128, 3, 1, 1),  # [,128,48,48]
+#             nn.ReLU(),
+#             nn.BatchNorm2d(128),
+#             nn.Conv2d(128, 128, 3, 1, 1),  # [,128,48,48]
+#             nn.ReLU(),
+#             nn.BatchNorm2d(128),
+#             nn.Conv2d(128, 256, 3, 1, 1),  # [,256,48,48]
+#             nn.ReLU(),
+#             nn.MaxPool2d(2, 2),  # [,256,24,24]
+#             nn.BatchNorm2d(256),
+#         )
+#         ## 定义Decoder
+#         self.Decoder = nn.Sequential(
+#             nn.ConvTranspose2d(256, 128, 3, 1, 1),  # [,128,24,24]
+#             nn.ReLU(),
+#             nn.BatchNorm2d(128),
+#             nn.ConvTranspose2d(128, 128, 3, 2, 1, 1),  # [,128,48,48]
+#             nn.ReLU(),
+#             nn.BatchNorm2d(128),
+#
+#             nn.ConvTranspose2d(128, 64, 3, 1, 1),  # [,64,48,48]
+#             nn.ReLU(),
+#             nn.BatchNorm2d(64),
+#             nn.ConvTranspose2d(64, 32, 3, 1, 1),  # [,32,48,48]
+#             nn.ReLU(),
+#             nn.BatchNorm2d(32),
+#
+#             nn.ConvTranspose2d(32, 32, 3, 1, 1),  # [,32,48,48]
+#             nn.ConvTranspose2d(32, 16, 3, 2, 1, 1),  # [,16,96,96]
+#             nn.ReLU(),
+#             nn.BatchNorm2d(16),
+#
+#             nn.ConvTranspose2d(16, 3, 3, 1, 1),  # [,3,96,96]
+#             nn.Sigmoid(),
+#         )
+#
+#     ## 定义网络的向前传播路径
+#     def forward(self, x):
+#         encoder = self.Encoder(x)
+#         decoder = self.Decoder(encoder)
+#         return encoder, decoder
+#
+#
+# # 定义优化器
+# LR = 0.0003
+# optimizer = torch.optim.Adam(DAEmodel.parameters(), lr=LR)
+# loss_func = nn.MSELoss()  # 损失函数
+# # 记录训练过程的指标
+# history1 = hl.History()
+# # 使用Canvas进行可视化
+# canvas1 = hl.Canvas()
+# train_num = 0
+# val_num = 0
+# ## 对模型进行迭代训练,对所有的数据训练EPOCH轮
+# for epoch in range(10):
+#     train_loss_epoch = 0
+#     val_loss_epoch = 0
+#     ## 对训练数据的迭代器进行迭代计算
+#     for step, (b_x, b_y) in enumerate(train_loader):
+#         DAEmodel.train()
+#         ## 使用每个batch进行训练模型
+#         _, output = DAEmodel(b_x)  # CNN在训练batch上的输出
+#         loss = loss_func(output, b_y)  # 平方根误差
+#         optimizer.zero_grad()  # 每个迭代步的梯度初始化为0
+#         loss.backward()  # 损失的后向传播，计算梯度
+#         optimizer.step()  # 使用梯度进行优化
+#         train_loss_epoch += loss.item() * b_x.size(0)
+#         train_num = train_num + b_x.size(0)
+#
+#     ## 使用每个batch进行验证模型
+#     for step, (b_x, b_y) in enumerate(val_loader):
+#         DAEmodel.eval()
+#         _, output = DAEmodel(b_x)  # CNN在训练batch上的输出
+#         loss = loss_func(output, b_y)  # 平方根误差
+#         val_loss_epoch += loss.item() * b_x.size(0)
+#         val_num = val_num + b_x.size(0)
+#     ## 计算一个epoch的损失
+#     train_loss = train_loss_epoch / train_num
+#     val_loss = val_loss_epoch / val_num
+#
+#     ## 保存每个epoch上的输出loss
+#     history1.log(epoch, train_loss=train_loss,
+#                  val_loss=val_loss)
+#     # 可视网络训练的过程
+#     with canvas1:
+#         canvas1.draw_plot([history1["train_loss"], history1["val_loss"]])
+# ## 输入
+# imageindex = 1
+# im = X_val[imageindex,...]
+# im = im.unsqueeze(0)
+# imnose = np.transpose(im.data.numpy(),(0,3,2,1))
+# imnose = imnose[0,...]
+# ## 去噪
+# DAEmodel.eval()
+# _,output = DAEmodel(im)
+# imde = np.transpose(output.data.numpy(),(0,3,2,1))
+# imde = imde[0,...]
+# ## 输出
+# im = y_val[imageindex,...]
+# imor = im.unsqueeze(0)
+# imor = np.transpose(imor.data.numpy(),(0,3,2,1))
+# imor = imor[0,...]
+# ## 计算去噪后的PSNR
+# print("加噪后的PSNR:",compare_psnr(imor,imnose),"dB")
+# print("去噪后的PSNR:",compare_psnr(imor,imde),"dB")
+#
+# ## 将图像可视化
+# plt.figure(figsize=(12,4))
+# plt.subplot(1,3,1)
+# plt.imshow(imor)
+# plt.axis("off")
+# plt.title("Origin image")
+# plt.subplot(1,3,2)
+# plt.imshow(imnose)
+# plt.axis("off")
+# plt.title("Noise image $\sigma$=30")
+# plt.subplot(1,3,3)
+# plt.imshow(imde)
+# plt.axis("off")
+# plt.title("Deoise image")
+# plt.show()
+# ## 计算模型对整个验证集去噪后的PSNR提升量的均值
+# PSNR_val = []
+# DAEmodel.eval()
+# for ii in range(X_val.shape[0]):
+#     imageindex = ii
+#     ## 输入
+#     im = X_val[imageindex, ...]
+#     im = im.unsqueeze(0)
+#     imnose = np.transpose(im.data.numpy(), (0, 3, 2, 1))
+#     imnose = imnose[0, ...]
+#     ## 去噪
+#     _, output = DAEmodel(im)
+#     imde = np.transpose(output.data.numpy(), (0, 3, 2, 1))
+#     imde = imde[0, ...]
+#     ## 输出
+#     im = y_val[imageindex, ...]
+#     imor = im.unsqueeze(0)
+#     imor = np.transpose(imor.data.numpy(), (0, 3, 2, 1))
+#     imor = imor[0, ...]
+#     ## 计算去噪后的PSNR
+#     PSNR_val.append(compare_psnr(imor, imde) - compare_psnr(imor, imnose))
+#
+# print("PSNR的平均提升量为:", np.mean(PSNR_val), "dB")
+#
+# # 除了使用转职卷积进行上采样，也可以使用UpsamplingBilinear2d()线性插值和卷积层进行Decoder
+# class DenoiseAutoEncoder(nn.Module):
+#     def __init__(self):
+#         super(DenoiseAutoEncoder, self).__init__()
+#         ## 定义Encoder
+#         self.Encoder = nn.Sequential(
+#             nn.Conv2d(in_channels=3, out_channels=64,
+#                       kernel_size=3, stride=1, padding=1),  # [,64,96,96]
+#             nn.ReLU(),
+#             nn.BatchNorm2d(64),
+#             nn.Conv2d(64, 64, 3, 1, 1),  # [,64,96,96]
+#             nn.ReLU(),
+#             nn.BatchNorm2d(64),
+#             nn.Conv2d(64, 64, 3, 1, 1),  # [,64,96,96]
+#             nn.ReLU(),
+#             nn.MaxPool2d(2, 2),  # [,64,48,48]
+#             nn.BatchNorm2d(64),
+#
+#             nn.Conv2d(64, 128, 3, 1, 1),  # [,128,48,48]
+#             nn.ReLU(),
+#             nn.BatchNorm2d(128),
+#             nn.Conv2d(128, 128, 3, 1, 1),  # [,128,48,48]
+#             nn.ReLU(),
+#             nn.BatchNorm2d(128),
+#             nn.Conv2d(128, 256, 3, 1, 1),  # [,256,48,48]
+#             nn.ReLU(),
+#             nn.MaxPool2d(2, 2),  # [,256,24,24]
+#             nn.BatchNorm2d(256),
+#         )
+#         ## 定义Decoder
+#         self.Decoder = nn.Sequential(
+#             nn.UpsamplingBilinear2d(scale_factor=2),  # [,256,48,48]
+#             nn.Conv2d(256, 128, 3, 1, 1),  # [,128,48,48]
+#             nn.ReLU(),
+#             nn.BatchNorm2d(128),
+#             nn.Conv2d(128, 64, 3, 1, 1),  # [,128,48,48]
+#             nn.ReLU(),
+#             nn.BatchNorm2d(64),
+#
+#             nn.UpsamplingBilinear2d(scale_factor=2),  # [,64,96,96]
+#             nn.Conv2d(64, 32, 3, 1, 1),  # [,32,96,96]
+#             nn.ReLU(),
+#             nn.BatchNorm2d(32),
+#
+#             nn.Conv2d(32, 3, 3, 1, 1),  # [,3,96,96]
+#             nn.Sigmoid(),
+#         )
+#
+#     ## 定义网络的向前传播路径
+#     def forward(self, x):
+#         encoder = self.Encoder(x)
+#         decoder = self.Decoder(encoder)
+#         return encoder, decoder
+#
+#
+# ## 输出我们的网络结构
+# DAEmodel = DenoiseAutoEncoder()
+# print(DAEmodel)
+# # 定义优化器
+# LR = 0.0003
+# optimizer = torch.optim.Adam(DAEmodel.parameters(), lr=LR)
+# loss_func = nn.MSELoss()  # 损失函数
+# # 记录训练过程的指标
+# history1 = hl.History()
+# # 使用Canvas进行可视化
+# canvas1 = hl.Canvas()
+# train_num = 0
+# val_num = 0
+# ## 对模型进行迭代训练,对所有的数据训练EPOCH轮
+# for epoch in range(10):
+#     train_loss_epoch = 0
+#     val_loss_epoch = 0
+#     ## 对训练数据的迭代器进行迭代计算
+#     for step, (b_x, b_y) in enumerate(train_loader):
+#         DAEmodel.train()
+#         ## 使用每个batch进行训练模型
+#         _, output = DAEmodel(b_x)  # CNN在训练batch上的输出
+#         loss = loss_func(output, b_y)  # 平方根误差
+#         optimizer.zero_grad()  # 每个迭代步的梯度初始化为0
+#         loss.backward()  # 损失的后向传播，计算梯度
+#         optimizer.step()  # 使用梯度进行优化
+#         train_loss_epoch += loss.item() * b_x.size(0)
+#         train_num = train_num + b_x.size(0)
+#
+#     ## 使用每个batch进行验证模型
+#     for step, (b_x, b_y) in enumerate(val_loader):
+#         DAEmodel.eval()
+#         _, output = DAEmodel(b_x)  # CNN在训练batch上的输出
+#         loss = loss_func(output, b_y)  # 平方根误差
+#         val_loss_epoch += loss.item() * b_x.size(0)
+#         val_num = val_num + b_x.size(0)
+#     ## 计算一个epoch的损失
+#     train_loss = train_loss_epoch / train_num
+#     val_loss = val_loss_epoch / val_num
+#
+#     ## 保存每个epoch上的输出loss
+#     history1.log(epoch, train_loss=train_loss,
+#                  val_loss=val_loss)
+#     # 可视网络训练的过程
+#     with canvas1:
+#         canvas1.draw_plot([history1["train_loss"], history1["val_loss"]])
+# ## 输入，评价去噪效果
+# imageindex = 1
+# im = X_val[imageindex,...]
+# im = im.unsqueeze(0)
+# imnose = np.transpose(im.data.numpy(),(0,3,2,1))
+# imnose = imnose[0,...]
+# ## 去噪
+# DAEmodel.eval()
+# _,output = DAEmodel(im)
+# imde = np.transpose(output.data.numpy(),(0,3,2,1))
+# imde = imde[0,...]
+# ## 输出
+# im = y_val[imageindex,...]
+# imor = im.unsqueeze(0)
+# imor = np.transpose(imor.data.numpy(),(0,3,2,1))
+# imor = imor[0,...]
+# ## 计算去噪后的PSNR
+# print("加噪后的PSNR:",compare_psnr(imor,imnose),"dB")
+# print("去噪后的PSNR:",compare_psnr(imor,imde),"dB")
+#
+# ## 将图像可视化
+# plt.figure(figsize=(12,4))
+# plt.subplot(1,3,1)
+# plt.imshow(imor)
+# plt.axis("off")
+# plt.title("Origin image")
+# plt.subplot(1,3,2)
+# plt.imshow(imnose)
+# plt.axis("off")
+# plt.title("Noise image $\sigma$=30")
+# plt.subplot(1,3,3)
+# plt.imshow(imde)
+# plt.axis("off")
+# plt.title("Deoise image")
+# plt.show()
+# ## 计算模型对整个验证集去噪后的PSNR提升量的均值
+# PSNR_val = []
+# DAEmodel.eval()
+# for ii in range(X_val.shape[0]):
+#     imageindex = ii
+#     ## 输入
+#     im = X_val[imageindex, ...]
+#     im = im.unsqueeze(0)
+#     imnose = np.transpose(im.data.numpy(), (0, 3, 2, 1))
+#     imnose = imnose[0, ...]
+#     ## 去噪
+#     _, output = DAEmodel(im)
+#     imde = np.transpose(output.data.numpy(), (0, 3, 2, 1))
+#     imde = imde[0, ...]
+#     ## 输出
+#     im = y_val[imageindex, ...]
+#     imor = im.unsqueeze(0)
+#     imor = np.transpose(imor.data.numpy(), (0, 3, 2, 1))
+#     imor = imor[0, ...]
+#     ## 计算去噪后的PSNR
+#     PSNR_val.append(compare_psnr(imor, imde) - compare_psnr(imor, imnose))
+# print("PSNR的平均提升量为:", np.mean(PSNR_val), "dB")
+
+# 风格迁移
+## 定义一个读取风格图像或内容图像的函数，并且将图像进行必要转化
+# def load_image(img_path,shape=None):
+#     image = Image.open(img_path)
+#     size = image.size
+#     ## 如果指定了图像的尺寸，就将图像转化为shape指定的尺寸
+#     if shape is not None:
+#         size = shape
+#     ## 使用transforms将图像转化为张量，并进行标准化
+#     in_transform = transforms.Compose(
+#         [transforms.Resize(size), # 图像尺寸变换
+#          transforms.ToTensor(), # 数组转化为张量
+#          ## 图像进行标准化
+#          transforms.Normalize((0.485, 0.456, 0.406),
+#                               (0.229, 0.224, 0.225))])
+#     # 使用图像的RGB通道，并且添加batch纬度
+#     image = in_transform(image)[:3,:,:].unsqueeze(dim=0)
+#     return image
+# ## ResidualBlock残差块的网络结构
+# class ResidualBlock(nn.Module):
+#     def __init__(self, channels):
+#         ## channels:b表示要输入的feature map 数量
+#         super(ResidualBlock, self).__init__()
+#         self.conv = nn.Sequential(
+#             nn.Conv2d(channels,channels,kernel_size=3,stride=1,padding=1),
+#             nn.ReLU(),
+#             nn.Conv2d(channels,channels,kernel_size=3,stride=1,padding=1)
+#         )
+#
+#     def forward(self, x):
+#         return F.relu(self.conv(x) + x)
+# ## 定义图像转换网络
+# class ImfwNet(nn.Module):
+#     def __init__(self):
+#         super(ImfwNet, self).__init__()
+#         self.downsample = nn.Sequential(
+#             nn.ReflectionPad2d(padding=4),##使用边界反射填充
+#             nn.Conv2d(3,32,kernel_size=9,stride=1),
+#             nn.InstanceNorm2d(32,affine=True),## 在像素值上做归一化
+#             nn.ReLU(),  ## 3*256*256->32*256*256
+#             nn.ReflectionPad2d(padding=1),
+#             nn.Conv2d(32,64,kernel_size=3,stride=2),
+#             nn.InstanceNorm2d(64,affine=True),
+#             nn.ReLU(),  ## 32*256*256 -> 64*128*128
+#             nn.ReflectionPad2d(padding=1),
+#             nn.Conv2d(64,128,kernel_size=3,stride=2),
+#             nn.InstanceNorm2d(128,affine=True),
+#             nn.ReLU(),  ## 64*128*128 -> 128*64*64
+#         )
+#         self.res_blocks = nn.Sequential(
+#             ResidualBlock(128),
+#             ResidualBlock(128),
+#             ResidualBlock(128),
+#             ResidualBlock(128),
+#             ResidualBlock(128),
+#         )
+#         self.unsample = nn.Sequential(
+#             nn.ConvTranspose2d(128,64,kernel_size=3,stride=2,padding=1,output_padding=1),
+#             nn.InstanceNorm2d(64,affine=True),
+#             nn.ReLU(),  ## 128*64*64->64*128*128
+#             nn.ConvTranspose2d(64,32,kernel_size=3,stride=2,padding=1,output_padding=1),
+#             nn.InstanceNorm2d(32,affine=True),
+#             nn.ReLU(),  ## 64*128*128->32*256*256
+#             nn.ConvTranspose2d(32,3,kernel_size=9,stride=1,padding=4),## 32*256*256->3*256*256;
+#         )
+#     def forward(self,x):
+#         x = self.downsample(x) ## 输入像素值－2.1～2.7之间
+#         x = self.res_blocks(x)
+#         x = self.unsample(x) ## 输出像素值－2.1～2.7之间
+#         return x
+# # 定义一个将标准化后的图像转化为便于利用matplotlib可视化的函数
+# def im_convert(tensor):
+#     """
+#     将[1, c, h, w]纬度的张量转化为[ h, w,c]的数组
+#     因为张量进行了表转化，所以要进行标准化逆变换
+#     """
+#     tensor = tensor.cpu() ## 数据转换为CPU
+#     image = tensor.data.numpy().squeeze() # 去处batch纬度数据
+#     image = image.transpose(1,2,0) ## 置换数组的纬度[c,h,w]->[h,w,c]
+#     ## 进行标准化的逆操作
+#     image = image * np.array((0.229, 0.224, 0.225)) + np.array((0.485, 0.456, 0.406))
+#     image = image.clip(0, 1) ##  将图像的取值剪切到0～1之间
+#     return image
+# content = load_image(r"E:\BaiduNetdiskDownload\程序\programs\data\chap9\222.jpg")
+# device = torch.device('cpu')
+# fwnet = ImfwNet()
+# fwnet.load_state_dict(torch.load(r"E:\BaiduNetdiskDownload\程序\programs\data\chap9\imfwnet_dict.pkl",map_location=device))
+# trans_content = fwnet(content)
+# plt.figure()
+# plt.imshow(im_convert(content))
+# plt.figure()
+# plt.imshow(im_convert(trans_content))
+# plt.show()
+
+
+
